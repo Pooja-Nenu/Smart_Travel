@@ -126,3 +126,5 @@ STATICFILES_DIRS = [
 # Media files (User uploaded trip images, avatars)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+AUTH_USER_MODEL = 'travel.CustomUser'

@@ -1,0 +1,132 @@
+/* --------------------------------------------------
+   VARIABLES (Modern Ocean Theme)
+-------------------------------------------------- */
+:root {
+    --primary-color: #2563EB; /* Ocean Blue */
+    --primary-hover: #1d4ed8;
+    --secondary-color: #F97316; /* Sunset Orange */
+    --text-dark: #111827;
+    --text-muted: #6B7280;
+    --input-bg: #F9FAFB;
+    --input-border: #E5E7EB;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #ffffff;
+}
+
+/* --------------------------------------------------
+   LEFT SIDE: BACKGROUND IMAGE
+-------------------------------------------------- */
+.bg-image {
+    background: url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+    background-size: cover;
+    position: relative;
+    overflow: hidden;
+}
+
+.overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.8), rgba(249, 115, 22, 0.4));
+    z-index: 1;
+}
+
+.content-text {
+    z-index: 2;
+    max-width: 80%;
+}
+
+/* --------------------------------------------------
+   RIGHT SIDE: FORM STYLING
+-------------------------------------------------- */
+.auth-wrapper {
+    width: 100%;
+    /* REDUCED WIDTH FOR COMPACT LOOK */
+    max-width: 400px; 
+}
+
+/* Typography */
+h1 { letter-spacing: -1px; }
+h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
+
+/* Custom Inputs - SMALLER SIZE */
+.form-control {
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px; /* Slightly less rounded */
+    padding: 10px 12px; /* Reduced padding */
+    font-size: 0.9rem;  /* Smaller font */
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-label {
+    letter-spacing: 0.5px;
+    font-size: 0.7rem; /* Smaller label */
+    margin-bottom: 0.3rem;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.95rem; /* Smaller button text */
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-social {
+    border-color: var(--input-border);
+    background: #fff;
+    color: var(--text-dark);
+    font-weight: 500;
+    padding: 8px; /* Compact padding */
+    font-size: 0.9rem;
+}
+.btn-social:hover {
+    background-color: var(--input-bg);
+    border-color: #d1d5db;
+}
+
+/* Divider Line */
+.divider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--input-border);
+    position: relative;
+    margin: 20px 0;
+}
+.divider span {
+    background-color: #fff;
+    padding: 0 10px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* --------------------------------------------------
+   ANIMATIONS
+-------------------------------------------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-container {
+    animation: fadeIn 0.5s ease-out forwards;
+}
