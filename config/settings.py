@@ -134,3 +134,11 @@ LOGIN_REDIRECT_URL = 'dashboard'
 
 # 2. If a user tries to open a restricted page without logging in, send them to the login page
 LOGIN_URL = 'login'
+
+# EMAIL SETTINGS (SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'pooja2.dudani2005@gmail.com'  # <--- REPLACE THIS
+EMAIL_HOST_PASSWORD = 'wsts erpc cpcs qmpc' # <--- REPLACE THIS (Google App Password)
