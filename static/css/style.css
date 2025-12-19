@@ -177,3 +177,192 @@ h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
     color: var(--primary-color) !important;
     font-weight: 500;
 }
+
+/* --------------------------------------------------
+   DASHBOARD LAYOUT (Sidebar & Wrapper)
+-------------------------------------------------- */
+:root {
+    --main-bg: #e0e6ed;
+    --shadow-color: rgba(17, 12, 46, 0.15);
+}
+
+#wrapper {
+    overflow-x: hidden;
+    background-color: #f3f4f6;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -15rem;
+    transition: margin 0.25s ease-out;
+    width: 15rem;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 0.875rem 1.25rem;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+#sidebar-wrapper .list-group {
+    width: 15rem;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    min-height: 100vh;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+#menu-toggle {
+    cursor: pointer;
+}
+
+/* Sidebar Links */
+.list-group-item {
+    border: none;
+    padding: 20px 30px;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+}
+
+.list-group-item.active {
+    background-color: transparent;
+    color: var(--primary-color);
+    font-weight: bold;
+    border-left: 4px solid var(--primary-color);
+}
+
+.list-group-item:hover {
+    color: var(--primary-color);
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+/* Stats Cards */
+.card-hover {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px var(--shadow-color) !important;
+}
+
+/* Icon Backgrounds */
+.secondary-bg { background-color: #e0f2fe; color: #0284c7; }
+.success-bg { background-color: #dcfce7; color: #16a34a; }
+.warning-bg { background-color: #fef3c7; color: #d97706; }
+.info-bg { background-color: #e0e7ff; color: #4f46e5; }
+
+/* Navbar */
+.primary-text { color: var(--primary-color); }
+.second-text { color: var(--text-dark); }
+
+/* Responsive Sidebar */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+    #page-content-wrapper {
+        width: 100%;
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: -15rem;
+    }
+}
+
+/* --------------------------------------------------
+   DASHBOARD 2.0 (Modern / Dreams POS Style)
+-------------------------------------------------- */
+
+/* Wrapper & Sidebar Layout */
+#wrapper {
+    overflow-x: hidden;
+    background-color: #F8F9FA; /* Very light grey background */
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 17rem; /* Wider sidebar for better look */
+    margin-left: 0;
+    transition: margin 0.25s ease-out;
+    border-right: 1px solid #eee;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+    z-index: 100;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: -17rem;
+}
+
+#page-content-wrapper {
+    width: 100%;
+}
+
+/* Sidebar Links */
+.list-group-item {
+    border: none;
+    padding: 12px 25px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #5E5873; /* Dark Grey Text */
+    border-radius: 0 25px 25px 0 !important; /* Rounded Right Edge */
+    margin-bottom: 5px;
+    margin-right: 15px; /* Spacing for the rounded edge */
+    transition: all 0.3s ease;
+}
+
+/* Active Link Styling (Orange Accent) */
+.list-group-item.active {
+    background-color: rgba(255, 159, 67, 0.15) !important; /* Light Orange BG */
+    color: #FF9F43 !important; /* Orange Text */
+    border-left: 4px solid #FF9F43;
+}
+
+.list-group-item:hover:not(.active) {
+    background-color: #f6f6f6;
+    color: #2563EB; /* Blue on hover */
+    transform: translateX(5px);
+}
+
+/* Card Animation */
+.card-animate {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 15px !important; /* Softer corners */
+    position: relative;
+    overflow: hidden;
+}
+
+.card-animate:hover {
+    transform: translateY(-5px); /* Pop up effect */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+}
+
+/* Navbar Tweaks */
+.navbar {
+    background: #fff;
+    border-radius: 0 0 15px 15px;
+}
+
+/* Search Bar in Dashboard */
+.input-group-text {
+    background-color: #f3f4f6;
+}
+.navbar input.form-control {
+    background-color: #f3f4f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: -17rem;
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: 0;
+    }
+}

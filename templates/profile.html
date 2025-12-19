@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Smart Travel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --orange: #FF9F43; --blue: #3B82F6; --sidebar-width: 280px; --topbar-height: 70px;
+            --bg-body: #F5F6FA; --bg-card: #ffffff; --text-main: #2D3748; --text-secondary: #64748B;
+            --text-muted: #94A3B8; --border-color: #E2E8F0; --hover-bg: #FFF5EB; --input-bg: #F8FAFC;
+            --shadow-color: rgba(0,0,0,0.05);
+        }
+        body.dark-mode {
+            --bg-body: #121212; --bg-card: #1E1E1E; --text-main: #E2E8F0; --text-secondary: #A0AEC0;
+            --text-muted: #718096; --border-color: #2D3748; --hover-bg: #2D3748; --input-bg: #2D3748;
+            --shadow-color: rgba(0,0,0,0.3);
+        }
+        /* Tom Select Dark Mode Fixes */
+        body.dark-mode .ts-control, body.dark-mode .ts-dropdown { background-color: var(--input-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
+        body.dark-mode .ts-dropdown .option { color: var(--text-main) !important; }
+        body.dark-mode .ts-dropdown .active { background-color: var(--hover-bg) !important; color: var(--orange) !important; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); transition: 0.3s; }
+
+        /* --- LAYOUT --- */
+        .sidebar { position: fixed; left: 0; top: 0; width: var(--sidebar-width); height: 100vh; background: var(--bg-card); border-right: 1px solid var(--border-color); z-index: 1000; display: flex; flex-direction: column; }
+        .logo { padding: 30px 25px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; }
+        .logo-content { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-icon-box { width: 42px; height: 42px; background: linear-gradient(135deg, var(--blue) 0%, #60A5FA 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25); }
+        .logo-svg { width: 24px; height: 24px; fill: #ffffff; }
+        .logo-text { display: flex; flex-direction: column; justify-content: center; line-height: 1; }
+        .logo-title { font-size: 19px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+        .logo-subtitle { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 3px; }
+
+        .sidebar-menu { flex: 1; padding: 15px 0; overflow-y: auto; }
+        .menu-section { margin-bottom: 20px; }
+        .menu-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 0 20px; margin-bottom: 8px; letter-spacing: 0.8px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; margin: 4px 12px; color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px; transition: 0.2s; position: relative; }
+        .menu-item:hover { background: var(--hover-bg); color: var(--orange); }
+        .menu-item.active { background: linear-gradient(90deg, var(--hover-bg) 0%, var(--bg-card) 100%); color: var(--orange); font-weight: 600; }
+        .menu-item.active::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--orange); border-radius: 0 4px 4px 0; }
+        .menu-item.logout { color: #EF4444; margin-top: 10px; }
+        .menu-item.logout:hover { background: rgba(239, 68, 68, 0.1); }
+
+        .main-content { margin-left: var(--sidebar-width); min-height: 100vh; }
+        .topbar { background: var(--bg-card); height: var(--topbar-height); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; position: sticky; top: 0; z-index: 100; }
+        .topbar-title { font-size: 20px; font-weight: 700; color: var(--text-main); }
+        .menu-toggle { font-size: 20px; color: var(--text-main); cursor: pointer; padding: 6px; border-radius: 6px; display: none; }
+        .topbar-right { display: flex; align-items: center; gap: 20px; }
+
+        .theme-toggle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--input-bg); color: var(--text-secondary); }
+        .theme-toggle:hover { background: var(--border-color); color: var(--orange); }
+        .search-box { position: relative; }
+        .search-box input { width: 260px; padding: 8px 36px 8px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--input-bg); color: var(--text-main); }
+        .search-box i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+
+        .user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 10px; border-radius: 10px; }
+        .user-profile:hover { background: var(--input-bg); }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+        .user-name { font-weight: 600; color: var(--text-main); font-size: 14px; }
+        .profile-container { position: relative; }
+        .profile-menu { position: absolute; top: 120%; right: 0; width: 180px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: 0.2s; padding: 5px 0; }
+        .profile-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .profile-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 20px; text-decoration: none; color: var(--text-main); font-size: 14px; font-weight: 500; transition: 0.2s; }
+        .profile-menu a:hover { background: var(--hover-bg); color: var(--orange); }
+        .profile-menu .dropdown-divider { height: 1px; background: var(--border-color); margin: 5px 0; }
+
+        /* --- PAGE CONTENT --- */
+        .content-area { padding: 30px; }
+        .profile-layout { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 20px; }
+        
+        /* Cards */
+        .card { background: var(--bg-card); border-radius: 16px; box-shadow: 0 1px 3px var(--shadow-color); border: 1px solid var(--border-color); overflow: hidden; }
+        .profile-card { text-align: center; padding-bottom: 30px; height: fit-content; }
+        .profile-cover { height: 120px; background: linear-gradient(135deg, #FF9F43 0%, #FFB366 100%); }
+        .profile-img-container { margin-top: -60px; display: inline-block; position: relative; }
+        .profile-img { width: 120px; height: 120px; border-radius: 50%; border: 5px solid var(--bg-card); object-fit: cover; background: #E2E8F0; }
+        .camera-icon { position: absolute; bottom: 5px; right: 5px; background: var(--blue); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--bg-card); cursor: pointer; }
+        .profile-info { margin-top: 15px; }
+        .profile-name { font-size: 22px; font-weight: 700; color: var(--text-main); }
+        .profile-role { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+        .profile-stats { display: flex; justify-content: center; gap: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; margin: 0 20px; }
+        .p-stat-value { font-size: 20px; font-weight: 700; color: var(--text-main); display: block; }
+        .p-stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+
+        /* Forms */
+        .edit-card { padding: 30px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .card-title { font-size: 18px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .card-title i { color: var(--blue); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .full-width { grid-column: span 2; }
+        .form-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; }
+        .form-control { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 14px; color: var(--text-main); background: var(--input-bg); }
+        .form-control:focus { outline: none; border-color: var(--blue); background: var(--bg-card); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        .ts-control { background-color: var(--input-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; border-radius: 10px !important; padding: 12px 16px !important; font-size: 14px !important; }
+        .ts-dropdown { border-radius: 10px !important; box-shadow: 0 10px 30px var(--shadow-color) !important; border-color: var(--border-color) !important; }
+
+        .form-actions { margin-top: 25px; display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-save { background: var(--blue); color: #fff; border: none; padding: 12px 30px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.3s; }
+        .btn-save:hover { background: #2563EB; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+        .btn-cancel { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .btn-cancel:hover { background: var(--input-bg); color: var(--text-main); }
+        
+        .alert { padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+        .alert-success { background-color: #DEF7EC; color: #03543F; border: 1px solid #BDFCF0; }
+        .alert-error { background-color: #FDE8E8; color: #9B1C1C; border: 1px solid #FBD5D5; }
+
+        @media (max-width: 992px) { .profile-layout { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.active { transform: translateX(0); } .main-content { margin-left: 0; } .form-grid { grid-template-columns: 1fr; } .content-area { padding: 20px; } .search-box { display: none; } .menu-toggle { display: block; } }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <a href="{% url 'dashboard' %}" class="logo-content">
+                <div class="logo-icon-box">
+                    <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg>
+                </div>
+                <div class="logo-text"><span class="logo-title">SmartTravel</span><span class="logo-subtitle">Manager</span></div>
+            </a>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-label">Main Menu</div>
+                <a href="{% url 'dashboard' %}" class="menu-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+                <a href="#" class="menu-item"><i class="fas fa-suitcase"></i><span>My Trips</span></a>
+                <a href="#" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-label">Settings</div>
+                <a href="#" class="menu-item active"><i class="fas fa-user-cog"></i><span>Profile</span></a>
+                <a href="{% url 'logout' %}" class="menu-item logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><i class="fas fa-bars menu-toggle" id="menuToggle"></i><div class="topbar-title">My Profile</div></div>
+            <div class="topbar-right">
+                <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
+                <div class="search-box"><input type="text" placeholder="Search trips..."><i class="fas fa-search"></i></div>
+                <div class="profile-container">
+                    <div class="user-profile" id="userProfileBtn">
+                        <div class="user-avatar">{{ user.first_name|first|default:"U"|upper }}</div>
+                        <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                        <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
+                    </div>
+                    <div class="profile-menu" id="profileMenu">
+                        <a href="{% url 'profile' %}"><i class="fas fa-user"></i> Profile</a>
+                        <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'logout' %}" style="color: #EF4444;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="profile-layout">
+                <div class="card profile-card">
+                    <div class="profile-cover"></div>
+                    <div class="profile-img-container">
+                        <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=random&size=128" alt="Profile" class="profile-img">
+                        <div class="camera-icon"><i class="fas fa-camera"></i></div>
+                    </div>
+                    <div class="profile-info">
+                        <h3 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h3>
+                        <p class="profile-role">Travel Enthusiast 🌍</p>
+                    </div>
+                    <div class="profile-stats">
+                        <div><span class="p-stat-value">12</span><span class="p-stat-label">Trips</span></div>
+                        <div><span class="p-stat-value">5</span><span class="p-stat-label">Countries</span></div>
+                        <div><span class="p-stat-value">85</span><span class="p-stat-label">Photos</span></div>
+                    </div>
+                </div>
+
+                <div style="width: 100%; display: flex; flex-direction: column; gap: 30px;">
+                    
+                    <div class="card edit-card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="far fa-id-card" style="margin-right: 10px;"></i> Edit Personal Details</span>
+                        </div>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="update_profile" value="true">
+                            <div class="form-grid">
+                                <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-control" name="first_name" value="{{ user.first_name }}"></div>
+                                <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-control" name="last_name" value="{{ user.last_name }}"></div>
+                                <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-control" value="{{ user.email }}" readonly></div>
+                                <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-control" value="{{ user.username }}" readonly></div>
+                                <div class="form-group"><label class="form-label">Country</label><select id="profileCountry" name="country"><option value="">Select Country...</option></select></div>
+                                <div class="form-group"><label class="form-label">State / City</label><select id="profileState" name="state" disabled><option value="">Select State...</option></select></div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel">Cancel</button>
+                                <button type="submit" class="btn-save">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card edit-card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-lock" style="margin-right: 10px;"></i> Security & Password</span>
+                        </div>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="change_password" value="true">
+                            <div class="form-grid">
+                                {% for field in password_form %}
+                                    <div class="form-group full-width">
+                                        <label class="form-label">{{ field.label }}</label>
+                                        <input type="password" name="{{ field.name }}" class="form-control" required>
+                                        {% if field.errors %}
+                                            <small class="text-danger" style="color:#e53e3e; font-size:12px; margin-top: 4px;">{{ field.errors.0 }}</small>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel">Cancel</button>
+                                <button type="submit" class="btn-save" style="background: #475569;">Change Password</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div> </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        // Dropdown Logic
+        let countryTom, stateTom;
+        const savedCountry = "{{ user.country|default:'' }}";
+        const savedState = "{{ user.state|default:'' }}";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            countryTom = new TomSelect("#profileCountry", { create: false, sortField: "text" });
+            stateTom = new TomSelect("#profileState", { create: false, sortField: "text", valueField: 'value', labelField: 'text' });
+            countryTom.on('change', (val) => loadStates(val));
+            fetchCountries();
+        });
+
+        function fetchCountries() {
+            fetch('https://countriesnow.space/api/v0.1/countries/iso').then(r => r.json()).then(data => {
+                if (!data.error) {
+                    const countries = data.data.map(c => ({ value: c.name, text: c.name }));
+                    countryTom.clearOptions(); countryTom.addOption(countries); countryTom.refreshOptions();
+                    if (savedCountry) { countryTom.setValue(savedCountry); loadStates(savedCountry, savedState); }
+                }
+            });
+        }
+
+        function loadStates(country, preSelected = null) {
+            if (!country) return;
+            stateTom.clear(); stateTom.clearOptions(); stateTom.disable(); stateTom.settings.placeholder = "Loading..."; stateTom.sync();
+            fetch('https://countriesnow.space/api/v0.1/countries/states', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ country: country })
+            }).then(r => r.json()).then(data => {
+                stateTom.settings.placeholder = "Select State"; stateTom.enable();
+                if (!data.error && data.data.states.length > 0) {
+                    stateTom.addOption(data.data.states.map(s => ({ value: s.name, text: s.name })));
+                    if (preSelected) stateTom.setValue(preSelected);
+                } else { stateTom.addOption({ value: "N/A", text: "No states found" }); }
+                stateTom.sync();
+            });
+        }
+
+        // Shared Logic
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        if(menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+
+        const userProfileBtn = document.getElementById('userProfileBtn');
+        const profileMenu = document.getElementById('profileMenu');
+        if(userProfileBtn) {
+            userProfileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileMenu.classList.toggle('show'); });
+            window.addEventListener('click', (e) => { if (!profileMenu.contains(e.target)) profileMenu.classList.remove('show'); });
+        }
+
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const icon = themeToggle ? themeToggle.querySelector('i') : null;
+        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); if(icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }}
+        if(themeToggle) themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+            if(icon) icon.classList.toggle('fa-sun'); icon.classList.toggle('fa-moon');
+        });
+    </script>
+</body>
+</html>

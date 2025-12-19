@@ -38,7 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'travel',
+    
+    'django.contrib.sites',  # Required by allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -48,6 +56,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend', # Helper for Django Admin
+    'allauth.account.auth_backends.AuthenticationBackend', # Helper for Google
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -142,3 +156,26 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'pooja2.dudani2005@gmail.com'  # <--- REPLACE THIS
 EMAIL_HOST_PASSWORD = 'wsts erpc cpcs qmpc' # <--- REPLACE THIS (Google App Password)
+
+
+# --- GOOGLE AUTH SETTINGS ---
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
+# Allauth settings to match your project
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False  # Auto-generate username (hidden from user)
+SOCIALACCOUNT_AUTO_SIGNUP = True   # Don't ask for extra info, just sign them up
+SOCIALACCOUNT_LOGIN_ON_GET = True
+# Temporarily allow insecure http for testing (remove this in production!)
+OAUTHLIB_INSECURE_TRANSPORT = '1'
