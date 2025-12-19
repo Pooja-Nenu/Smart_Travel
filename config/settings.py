@@ -128,3 +128,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'travel.CustomUser'
+
+# 1. After logging in, redirect the user to the dashboard
+LOGIN_REDIRECT_URL = 'dashboard'
+
+# 2. If a user tries to open a restricted page without logging in, send them to the login page
+LOGIN_URL = 'login'

@@ -43,11 +43,9 @@ body {
 -------------------------------------------------- */
 .auth-wrapper {
     width: 100%;
-    /* REDUCED WIDTH FOR COMPACT LOOK */
     max-width: 400px; 
 }
 
-/* Typography */
 h1 { letter-spacing: -1px; }
 h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
 
@@ -55,9 +53,9 @@ h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
 .form-control {
     background-color: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 6px; /* Slightly less rounded */
-    padding: 10px 12px; /* Reduced padding */
-    font-size: 0.9rem;  /* Smaller font */
+    border-radius: 6px;
+    padding: 10px 12px; 
+    font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
@@ -65,11 +63,12 @@ h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
     background-color: #fff;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
 }
 
 .form-label {
     letter-spacing: 0.5px;
-    font-size: 0.7rem; /* Smaller label */
+    font-size: 0.7rem; 
     margin-bottom: 0.3rem;
 }
 
@@ -79,7 +78,7 @@ h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
     border: none;
     border-radius: 6px;
     padding: 10px;
-    font-size: 0.95rem; /* Smaller button text */
+    font-size: 0.95rem; 
     transition: all 0.3s ease;
 }
 
@@ -94,7 +93,7 @@ h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
     background: #fff;
     color: var(--text-dark);
     font-weight: 500;
-    padding: 8px; /* Compact padding */
+    padding: 8px; 
     font-size: 0.9rem;
 }
 .btn-social:hover {
@@ -129,4 +128,52 @@ h3 { letter-spacing: -0.5px; font-size: 1.75rem; }
 
 .form-container {
     animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* --------------------------------------------------
+   DROPDOWN STYLING (Tom Select Overrides)
+-------------------------------------------------- */
+
+/* Match the standard input style exactly */
+.ts-control {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--input-border) !important;
+    border-radius: 6px !important;
+    padding: 10px 12px !important;
+    font-size: 0.9rem !important;
+    box-shadow: none !important;
+    min-height: unset !important; /* Remove default height constraints */
+}
+
+/* Fix Focus State to match Ocean Blue theme */
+.ts-control.focus {
+    background-color: #fff !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    z-index: 10;
+}
+
+/* THE SCROLL FIX: Show only ~7 items (approx 240px) */
+.ts-dropdown-content {
+    max-height: 240px !important;
+    scroll-behavior: smooth;
+}
+
+/* Dropdown styling */
+.ts-dropdown {
+    border-color: var(--input-border) !important;
+    border-radius: 0 0 6px 6px !important;
+    z-index: 1000 !important; /* Ensure it floats above everything */
+}
+
+.ts-dropdown .option {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+/* Selected/Hover Item Color */
+.ts-dropdown .active {
+    background-color: #EFF6FF !important; /* Light Blue */
+    color: var(--primary-color) !important;
+    font-weight: 500;
 }
