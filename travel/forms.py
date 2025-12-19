@@ -1,6 +1,6 @@
 # travel/forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import authenticate
 from .models import CustomUser
 
 class UserRegistrationForm(forms.ModelForm):
@@ -9,7 +9,15 @@ class UserRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'username', 'country', 'state']
+        # We only ask for these fields. Username is generated automatically.
+        fields = ['first_name', 'last_name', 'email', 'country', 'state']
+
+    # 1. Ensure Email is Unique
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email is already registered. Please log in.")
+        return email
 
     def clean(self):
         cleaned_data = super().clean()
@@ -24,10 +32,54 @@ class UserRegistrationForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
+        
+        # Auto-generate username from First Name
+        first_name = self.cleaned_data.get('first_name', '').strip().lower()
+        if not first_name:
+            first_name = "user"
+            
+        base_username = first_name.replace(" ", "")
+        username = base_username
+        counter = 1
+        
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+            
+        user.username = username
+
         if commit:
             user.save()
         return user
 
-class UserLoginForm(AuthenticationForm):
-    # Django's built-in AuthenticationForm handles username/password validation automatically
-    pass
+# 2. Custom Email Login Form
+class UserLoginForm(forms.Form):
+    email = forms.EmailField(label="Email Address", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'name@company.com'}))
+    password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email")
+        password = cleaned_data.get("password")
+
+        if email and password:
+            # Find the user with this email
+            try:
+                user_obj = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                raise forms.ValidationError("This email is not registered.")
+            except CustomUser.MultipleObjectsReturned:
+                raise forms.ValidationError("Multiple accounts found with this email.")
+
+            # Authenticate using the found username and provided password
+            user = authenticate(username=user_obj.username, password=password)
+            
+            if user is None:
+                raise forms.ValidationError("Invalid password. Please try again.")
+            
+            self.user_cache = user
+        
+        return cleaned_data
+
+    def get_user(self):
+        return getattr(self, 'user_cache', None)
