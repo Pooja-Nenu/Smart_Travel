@@ -11,6 +11,8 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     
+    
+    
     # --- PASSWORD RESET URLS ---
     path('reset_password/', 
          auth_views.PasswordResetView.as_view(template_name="password_reset.html"), 
@@ -27,4 +29,11 @@ urlpatterns = [
     path('reset_password_complete/', 
          auth_views.PasswordResetCompleteView.as_view(template_name="password_reset_done.html"), 
          name="password_reset_complete"),
+    
+    path('trips/', views.trip_list, name='trip_list'),
+    path('trips/create/', views.trip_create, name='trip_create'),
+    path('trips/edit/<int:pk>/', views.trip_update, name='trip_update'),
+    path('trips/delete/<int:pk>/', views.trip_delete, name='trip_delete'),
+    path('trips/<int:pk>/', views.trip_detail, name='trip_detail'), # View Trip + Itinerary
+    path('trips/stop/delete/<int:pk>/', views.delete_stop, name='delete_stop'),
 ]

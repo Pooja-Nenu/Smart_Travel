@@ -1,7 +1,7 @@
 # travel/forms.py
 from django import forms
 from django.contrib.auth import authenticate
-from .models import CustomUser
+from .models import CustomUser,Trip,TripItinerary
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Password")
@@ -83,3 +83,32 @@ class UserLoginForm(forms.Form):
 
     def get_user(self):
         return getattr(self, 'user_cache', None)
+    
+class TripForm(forms.ModelForm):
+    class Meta:
+        model = Trip
+        fields = ['name', 'destination', 'start_date', 'end_date', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Summer Vacation'}),
+            
+            # MAKE SURE THIS IS TextInput (Not Select)
+            'destination': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_destination', 'placeholder': 'Start typing a city...', 'autocomplete': 'off'}),
+            
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        
+class ItineraryForm(forms.ModelForm):
+    class Meta:
+        model = TripItinerary
+        fields = ['location', 'date', 'notes']
+        widgets = {
+            'location': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'id': 'id_stop_location', # Unique ID for API script
+                'placeholder': 'Enter City/Stop...'
+            }),
+            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Activities planned...'}),
+        }

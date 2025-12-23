@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Trip | Smart Travel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    {% load static %}  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .delete-card {
+            background: var(--bg-card); border-radius: 20px; padding: 40px; text-align: center;
+            box-shadow: 0 10px 30px var(--shadow-color); border: 1px solid var(--border-color);
+            max-width: 450px; margin: 100px auto;
+        }
+        .warning-icon { font-size: 50px; color: #EF4444; margin-bottom: 20px; }
+        .btn-danger { background: #EF4444; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-danger:hover { background: #DC2626; }
+        .btn-cancel { color: var(--text-secondary); text-decoration: none; margin-left: 20px; font-weight: 500; }
+    </style>
+</head>
+<body>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <a href="#" class="logo-content">
+                <div class="logo-icon-box"><svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg></div>
+                <div class="logo-text"><span class="logo-title">SmartTravel</span><span class="logo-subtitle">Manager</span></div>
+            </a>
+        </div>
+        <div class="sidebar-menu">
+            <a href="{% url 'trip_list' %}" class="menu-item active"><i class="fas fa-arrow-left"></i><span>Back to Trips</span></a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="delete-card">
+            <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2 style="color: var(--text-main); margin-bottom: 10px;">Delete Trip?</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                Are you sure you want to delete <strong>"{{ trip.name }}"</strong>? This action cannot be undone and will remove all itinerary stops.
+            </p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">Yes, Delete It</button>
+                <a href="{% url 'trip_list' %}" class="btn-cancel">Cancel</a>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Minimal Dark Mode Logic for this page
+        const body = document.body;
+        if(localStorage.getItem('theme')==='dark') body.classList.add('dark-mode');
+    </script>
+</body>
+</html>

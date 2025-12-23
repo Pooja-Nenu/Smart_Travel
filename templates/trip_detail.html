@@ -1,0 +1,431 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trip.name }} | Itinerary</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard-design.css' %}">
+    <style>
+        /* Itinerary Section Styles */
+        .trip-header-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .trip-title h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .trip-meta {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .btn-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-back:hover {
+            color: var(--blue);
+        }
+
+        .itinerary-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .timeline {
+            list-style: none;
+            padding: 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 16px;
+            height: 16px;
+            background: var(--blue);
+            border-radius: 50%;
+            border: 3px solid var(--hover-bg);
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 25px;
+            bottom: -15px;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .stop-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .stop-card:hover {
+            transform: translateX(5px);
+            border-color: var(--blue);
+        }
+
+        .stop-date {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--blue);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stop-location {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stop-notes {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .btn-delete-stop {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #EF4444;
+            opacity: 0.6;
+            transition: 0.2s;
+        }
+
+        .btn-delete-stop:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .add-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            height: fit-content;
+            border: 1px solid var(--border-color);
+            shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--blue);
+            background: var(--bg-card);
+        }
+
+        .btn-add {
+            width: 100%;
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-add:hover {
+            background: #2563EB;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            padding: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .suggestion-item:hover {
+            background: var(--hover-bg);
+            color: var(--orange);
+        }
+
+        @media (max-width: 992px) {
+            .itinerary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <a href="{% url 'dashboard' %}" class="logo-content">
+                <div class="logo-icon-box">
+                    <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                    </svg>
+                </div>
+                <div class="logo-text"><span class="logo-title">SmartTravel</span><span
+                        class="logo-subtitle">Manager</span></div>
+            </a>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-label">Main Menu</div>
+                <a href="{% url 'dashboard' %}" class="menu-item"><i
+                        class="fas fa-th-large"></i><span>Dashboard</span></a>
+                <a href="{% url 'trip_list' %}" class="menu-item active"><i class="fas fa-suitcase"></i><span>My
+                        Trips</span></a>
+                <a href="#" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-label">Settings</div>
+                <a href="{% url 'profile' %}" class="menu-item"><i class="fas fa-user-cog"></i><span>Profile</span></a>
+                <a href="{% url 'logout' %}" class="menu-item logout"><i
+                        class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <i class="fas fa-bars menu-toggle" id="menuToggle"></i>
+                <div class="topbar-title">Trip Details</div>
+            </div>
+            <div class="topbar-right">
+                <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
+                <div class="profile-container">
+                    <div class="user-profile" id="userProfileBtn">
+                        <div class="user-avatar">{{ user.first_name|first|default:"U"|upper }}</div>
+                        <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                        <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="trip-header-card">
+                <div class="trip-title">
+                    <h1>{{ trip.name }}</h1>
+                    <div class="trip-meta">
+                        <i class="fas fa-map-marker-alt"></i> {{ trip.destination }} &nbsp;|&nbsp;
+                        <i class="far fa-calendar-alt"></i> {{ trip.start_date }} to {{ trip.end_date }}
+                    </div>
+                </div>
+                <a href="{% url 'trip_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Trips</a>
+            </div>
+
+            <div class="itinerary-grid">
+                <div>
+                    <h3 style="margin-bottom: 25px; color: var(--text-main); font-weight: 700;">Itinerary Timeline</h3>
+                    {% if stops %}
+                    <ul class="timeline">
+                        {% for stop in stops %}
+                        <li class="timeline-item">
+                            <div class="stop-card">
+                                <div class="stop-date">{{ stop.date }}</div>
+                                <div class="stop-location">{{ stop.location }}</div>
+                                {% if stop.notes %}
+                                <p class="stop-notes">{{ stop.notes }}</p>
+                                {% endif %}
+                                <a href="{% url 'delete_stop' stop.pk %}" class="btn-delete-stop"
+                                    onclick="return confirm('Remove this stop?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div
+                        style="text-align: center; color: var(--text-muted); padding: 60px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
+                        <i class="fas fa-route" style="font-size: 40px; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <p style="font-weight: 500;">No stops added yet.</p>
+                        <p style="font-size: 13px; margin-top: 5px;">Use the form to plan your trip route.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="add-card">
+                    <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add New Stop</h4>
+                    <form method="POST" autocomplete="off">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label class="form-label">Location / City</label>
+                            {{ form.location }}
+                            <div id="suggestions" class="suggestions-list"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Arrival Date</label>
+                            {{ form.date }}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Notes (Optional)</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <button type="submit" class="btn-add">Add to Itinerary</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('id_stop_location');
+        const suggestionsBox = document.getElementById('suggestions');
+        let timeout = null;
+
+        if (input) {
+            input.addEventListener('input', function () {
+                const query = this.value;
+                if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
+                clearTimeout(timeout);
+                timeout = setTimeout(() => { fetchLocations(query); }, 300);
+            });
+        }
+
+        function fetchLocations(query) {
+            fetch(`https://photon.komoot.io/api/?q=${query}&limit=5`)
+                .then(response => response.json())
+                .then(data => {
+                    suggestionsBox.innerHTML = '';
+                    const seen = new Set();
+
+                    if (data.features && data.features.length > 0) {
+                        suggestionsBox.style.display = 'block';
+                        data.features.forEach(feature => {
+                            const props = feature.properties;
+                            let parts = [];
+                            if (props.name) parts.push(props.name);
+                            if (props.state) parts.push(props.state);
+                            if (props.country) parts.push(props.country);
+                            const fullLocation = parts.join(", ");
+
+                            if (!seen.has(fullLocation)) {
+                                seen.add(fullLocation);
+                                const div = document.createElement('div');
+                                div.classList.add('suggestion-item');
+                                div.innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right:8px; color:var(--text-muted);"></i> ${fullLocation}`;
+                                div.addEventListener('click', function () {
+                                    input.value = fullLocation;
+                                    suggestionsBox.style.display = 'none';
+                                });
+                                suggestionsBox.appendChild(div);
+                            }
+                        });
+                    } else { suggestionsBox.style.display = 'none'; }
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.addEventListener('click', function (e) {
+            if (input && e.target !== input && e.target !== suggestionsBox) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); }
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        // Sidebar Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+    </script>
+</body>
+
+</html>

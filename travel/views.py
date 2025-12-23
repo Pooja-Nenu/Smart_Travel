@@ -1,18 +1,27 @@
 # travel/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from .forms import UserRegistrationForm, UserLoginForm
+from .models import Trip,TripItinerary
+from .forms import TripForm,ItineraryForm
 
 def landing_page(request):
     return render(request, 'index.html') 
 
+@login_required
 def dashboard(request):
-    return render(request, 'dashboard.html')
+    # Fetch user's trips, newest first
+    trips = Trip.objects.filter(user=request.user)
+    recent_trips = trips.order_by('-created_at')[:3]
+    total_trips = trips.count()
+    return render(request, 'dashboard.html', {
+        'recent_trips': recent_trips,
+        'total_trips': total_trips
+    })
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -86,6 +95,87 @@ def profile_view(request):
         'password_form': password_form
     })
 
+# TRIP LIST VIEW
+@login_required
+def trip_list(request):
+    trips = Trip.objects.filter(user=request.user).order_by('-start_date')
+    return render(request, 'trip_list.html', {'trips': trips})
+
+# CREATE TRIP VIEW
+@login_required
+def trip_create(request):
+    if request.method == 'POST':
+        form = TripForm(request.POST)
+        if form.is_valid():
+            trip = form.save(commit=False)
+            trip.user = request.user 
+            trip.save()
+            messages.success(request, "Trip created successfully! Now add your stops.")
+            return redirect('trip_detail', pk=trip.pk)       
+    else:
+        form = TripForm()
+    return render(request, 'trip_form.html', {'form': form, 'title': 'Create New Trip'})
+# EDIT TRIP VIEW
+@login_required
+def trip_update(request, pk):
+    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = TripForm(request.POST, instance=trip)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Trip updated successfully!")
+            return redirect('trip_list')
+    else:
+        form = TripForm(instance=trip)
+    return render(request, 'trip_form.html', {'form': form, 'title': 'Edit Trip'})
+
+# DELETE TRIP VIEW
+@login_required
+def trip_delete(request, pk):
+    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    if request.method == 'POST':
+        trip.delete()
+        messages.success(request, "Trip deleted successfully!")
+        return redirect('trip_list')
+    return render(request, 'trip_confirm_delete.html', {'trip': trip})
+
+# --- NEW: TRIP DETAIL & ITINERARY VIEW ---
+# --- NEW: TRIP DETAIL & ITINERARY VIEW ---
+@login_required
+def trip_detail(request, pk):
+    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    stops = trip.itinerary.all() # Get all stops for this trip
+
+    # Handle "Add Stop" Form
+    if request.method == 'POST':
+        form = ItineraryForm(request.POST)
+        if form.is_valid():
+            stop = form.save(commit=False)
+            stop.trip = trip # Link stop to the current trip
+            stop.save()
+            messages.success(request, "Stop added to itinerary!")
+            return redirect('trip_detail', pk=pk)
+    else:
+        form = ItineraryForm()
+
+    return render(request, 'trip_detail.html', {
+        'trip': trip,
+        'stops': stops,
+        'form': form
+    })
+
+# --- NEW: DELETE STOP VIEW ---
+@login_required
+def delete_stop(request, pk):
+    stop = get_object_or_404(TripItinerary, pk=pk)
+    trip_pk = stop.trip.pk # Remember trip ID to redirect back
+    if stop.trip.user == request.user: # Security check
+        stop.delete()
+        messages.success(request, "Stop removed.")
+    return redirect('trip_detail', pk=trip_pk)
+
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+

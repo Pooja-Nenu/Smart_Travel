@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} | Smart Travel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard-design.css' %}">
+    <style>
+        /* Form Specific Styles */
+        .edit-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text-main);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--blue);
+            background: var(--bg-card);
+        }
+
+        /* Location Search */
+        #id_destination {
+            border: 1px solid var(--blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suggestion-item:hover {
+            background-color: var(--hover-bg);
+            color: var(--orange);
+        }
+
+        .validation-error {
+            color: #DC2626;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <a href="{% url 'dashboard' %}" class="logo-content">
+                <div class="logo-icon-box"><svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                    </svg></div>
+                <div class="logo-text"><span class="logo-title">SmartTravel</span><span
+                        class="logo-subtitle">Manager</span></div>
+            </a>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-label">Main Menu</div>
+                <a href="{% url 'dashboard' %}" class="menu-item">
+                    <i class="fas fa-th-large"></i><span>Dashboard</span>
+                </a>
+                <a href="{% url 'trip_list' %}" class="menu-item active">
+                    <i class="fas fa-suitcase"></i><span>My Trips</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-clipboard-check"></i><span>Checklists</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i><span>Expenses</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-label">Settings</div>
+                <a href="{% url 'profile' %}" class="menu-item">
+                    <i class="fas fa-user-cog"></i><span>Profile</span>
+                </a>
+                <a href="{% url 'logout' %}" class="menu-item logout">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><i class="fas fa-bars menu-toggle" id="menuToggle"></i>
+                <div class="topbar-title">Manage Trip</div>
+            </div>
+            <div class="topbar-right">
+                <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
+                <div class="profile-container">
+                    <div class="user-profile" id="userProfileBtn">
+                        <div class="user-avatar">{{ user.first_name|first|default:"U"|upper }}</div><span
+                            class="user-name">{{ user.first_name|default:user.username }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="edit-card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                    <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main);">{{ title }}</h2>
+                </div>
+
+                <form method="POST" autocomplete="off" id="tripForm">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label class="form-label">Trip Name</label>
+                        {{ form.name }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Destination (City Search)</label>
+                        {{ form.destination }}
+                        <div id="suggestions" class="suggestions-list"></div>
+                        <div id="locationError" class="validation-error"><i class="fas fa-exclamation-circle"></i>
+                            Please select a valid location from the list.</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group"><label class="form-label">Start Date</label>{{ form.start_date }}</div>
+                        <div class="form-group"><label class="form-label">End Date</label>{{ form.end_date }}</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description (Optional)</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; gap: 15px;">
+                        <button type="submit"
+                            style="flex: 1; background: var(--blue); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+                            {% if 'Edit' in title %}Update Trip{% else %}Create & Add Stops <i
+                                class="fas fa-arrow-right" style="margin-left:5px;"></i>{% endif %}
+                        </button>
+                        <a href="{% url 'trip_list' %}"
+                            style="padding: 14px 25px; background: var(--input-bg); color: var(--text-secondary); text-decoration: none; border-radius: 12px; font-weight: 600;">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+    <script>
+        // --- Sidebar & Theme Logic ---
+        const menuToggle = document.getElementById('menuToggle'); const sidebar = document.getElementById('sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+        const themeToggle = document.getElementById('themeToggle'); const body = document.body;
+        if (localStorage.getItem('theme') === 'dark') body.classList.add('dark-mode');
+        if (themeToggle) themeToggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light'); });
+
+        // --- VALIDATION & PHOTON SEARCH ---
+        const tripForm = document.getElementById('tripForm');
+        const input = document.getElementById('id_destination');
+        const suggestionsBox = document.getElementById('suggestions');
+        const errorMsg = document.getElementById('locationError');
+        let isSelectionValid = input.value.trim() !== "";
+        let timeout = null;
+
+        input.addEventListener('input', function () {
+            const query = this.value; isSelectionValid = false; errorMsg.style.display = 'none';
+            if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
+            clearTimeout(timeout); timeout = setTimeout(() => { fetchLocations(query); }, 300);
+        });
+
+        function fetchLocations(query) {
+            fetch(`https://photon.komoot.io/api/?q=${query}&limit=10`).then(r => r.json()).then(data => {
+                suggestionsBox.innerHTML = ''; const seen = new Set();
+                if (data.features && data.features.length > 0) {
+                    suggestionsBox.style.display = 'block';
+                    data.features.forEach(f => {
+                        const p = f.properties;
+                        let parts = []; if (p.name) parts.push(p.name); if (p.state) parts.push(p.state); if (p.country) parts.push(p.country);
+                        const fullLoc = parts.join(", ");
+                        if (!seen.has(fullLoc)) {
+                            seen.add(fullLoc);
+                            const div = document.createElement('div'); div.classList.add('suggestion-item');
+                            div.innerHTML = `<i class="fas fa-map-marker-alt" style="color:var(--text-muted);"></i> ${fullLoc}`;
+                            div.addEventListener('click', () => { input.value = fullLoc; isSelectionValid = true; suggestionsBox.style.display = 'none'; });
+                            suggestionsBox.appendChild(div);
+                        }
+                    });
+                } else { suggestionsBox.style.display = 'none'; }
+            }).catch(e => console.error(e));
+        }
+
+        tripForm.addEventListener('submit', (e) => {
+            if (!isSelectionValid) { e.preventDefault(); errorMsg.style.display = 'block'; input.focus(); }
+        });
+        document.addEventListener('click', (e) => { if (input && e.target !== input && e.target !== suggestionsBox) suggestionsBox.style.display = 'none'; });
+
+        // --- DISABLE PAST DATES ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            const start = document.getElementById("id_start_date"); const end = document.getElementById("id_end_date");
+            if (start) start.setAttribute('min', today); if (end) end.setAttribute('min', today);
+            if (start && end) start.addEventListener('change', function () { end.setAttribute('min', this.value); });
+        });
+    </script>
+</body>
+
+</html>
