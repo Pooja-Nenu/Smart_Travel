@@ -1,58 +1,162 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delete Trip | Smart Travel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    {% load static %}  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard-design.css' %}">
     <style>
         .delete-card {
-            background: var(--bg-card); border-radius: 20px; padding: 40px; text-align: center;
-            box-shadow: 0 10px 30px var(--shadow-color); border: 1px solid var(--border-color);
-            max-width: 450px; margin: 100px auto;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            max-width: 450px;
+            margin: 60px auto;
         }
-        .warning-icon { font-size: 50px; color: #EF4444; margin-bottom: 20px; }
-        .btn-danger { background: #EF4444; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-danger:hover { background: #DC2626; }
-        .btn-cancel { color: var(--text-secondary); text-decoration: none; margin-left: 20px; font-weight: 500; }
+
+        .warning-icon {
+            font-size: 50px;
+            color: #EF4444;
+            margin-bottom: 20px;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .btn-cancel:hover {
+            color: var(--text-main);
+        }
     </style>
 </head>
+
 <body>
-    
+
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <a href="#" class="logo-content">
-                <div class="logo-icon-box"><svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg></div>
-                <div class="logo-text"><span class="logo-title">SmartTravel</span><span class="logo-subtitle">Manager</span></div>
+            <a href="{% url 'dashboard' %}" class="logo-content">
+                <div class="logo-icon-box">
+                    <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                    </svg>
+                </div>
+                <div class="logo-text"><span class="logo-title">SmartTravel</span><span
+                        class="logo-subtitle">Manager</span></div>
             </a>
         </div>
         <div class="sidebar-menu">
-            <a href="{% url 'trip_list' %}" class="menu-item active"><i class="fas fa-arrow-left"></i><span>Back to Trips</span></a>
+            <div class="menu-section">
+                <div class="menu-label">Main Menu</div>
+                <a href="{% url 'dashboard' %}" class="menu-item">
+                    <i class="fas fa-th-large"></i><span>Dashboard</span>
+                </a>
+                <a href="{% url 'trip_list' %}" class="menu-item active">
+                    <i class="fas fa-suitcase"></i><span>My Trips</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-clipboard-check"></i><span>Checklists</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i><span>Expenses</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-label">Settings</div>
+                <a href="{% url 'profile' %}" class="menu-item">
+                    <i class="fas fa-user-cog"></i><span>Profile</span>
+                </a>
+                <a href="{% url 'logout' %}" class="menu-item logout">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                </a>
+            </div>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="delete-card">
-            <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <h2 style="color: var(--text-main); margin-bottom: 10px;">Delete Trip?</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 30px;">
-                Are you sure you want to delete <strong>"{{ trip.name }}"</strong>? This action cannot be undone and will remove all itinerary stops.
-            </p>
-            
-            <form method="POST">
-                {% csrf_token %}
-                <button type="submit" class="btn-danger">Yes, Delete It</button>
-                <a href="{% url 'trip_list' %}" class="btn-cancel">Cancel</a>
-            </form>
+        <div class="topbar">
+            <div class="topbar-left">
+                <i class="fas fa-bars menu-toggle" id="menuToggle"></i>
+                <div class="topbar-title">Delete Confirmation</div>
+            </div>
+            <div class="topbar-right">
+                <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
+                <div class="profile-container">
+                    <div class="user-profile">
+                        <div class="user-avatar">{{user.first_name|first|default:"U"|upper}}</div>
+                        <span class="user-name">{{user.first_name|default:user.username}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="delete-card">
+                <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <h2 style="color: var(--text-main); margin-bottom: 10px;">Delete Trip?</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                    Are you sure you want to delete <strong>"{{ trip.name }}"</strong>? This action cannot be undone and
+                    will remove all itinerary stops.
+                </p>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger">Yes, Delete It</button>
+                    <a href="{% url 'trip_list' %}" class="btn-cancel">Cancel</a>
+                </form>
+            </div>
         </div>
     </div>
-    
+
     <script>
-        // Minimal Dark Mode Logic for this page
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && menuToggle) { menuToggle.addEventListener('click', () => sidebar.classList.toggle('active')); }
+
+        const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
-        if(localStorage.getItem('theme')==='dark') body.classList.add('dark-mode');
+        const icon = themeToggle ? themeToggle.querySelector('i') : null;
+
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+        }
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+                if (icon) { icon.classList.toggle('fa-sun'); icon.classList.toggle('fa-moon'); }
+            });
+        }
     </script>
 </body>
+
 </html>

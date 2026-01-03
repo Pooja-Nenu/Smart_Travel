@@ -55,3 +55,27 @@ class TripItinerary(models.Model):
 
     def __str__(self):
         return f"{self.location} on {self.date}"
+    
+class ChecklistItem(models.Model):
+    PRIORITY_CHOICES = [
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+    ]
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='checklist')
+    item_name = models.CharField(max_length=200)
+    is_done = models.BooleanField(default=False)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='Medium')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.item_name} ({self.priority})"
+    
+class GroupMember(models.Model):
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='members')
+    name = models.CharField(max_length=100)
+    contact = models.CharField(max_length=100, blank=True, null=True, help_text="Email")
+    
+    def __str__(self):
+        return self.name

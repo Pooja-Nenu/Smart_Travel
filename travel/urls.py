@@ -36,4 +36,9 @@ urlpatterns = [
     path('trips/delete/<int:pk>/', views.trip_delete, name='trip_delete'),
     path('trips/<int:pk>/', views.trip_detail, name='trip_detail'), # View Trip + Itinerary
     path('trips/stop/delete/<int:pk>/', views.delete_stop, name='delete_stop'),
+    
+    path('checklist/toggle/<int:pk>/', views.checklist_toggle, name='checklist_toggle'),
+    path('checklist/delete/<int:pk>/', views.checklist_delete, name='checklist_delete'),
+    path('checklists/', views.checklist_dashboard, name='checklist_dashboard'),
+    path('members/delete/<int:pk>/', views.delete_member, name='delete_member'),
 ]

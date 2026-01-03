@@ -10,13 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard-design.css' %}">
     <style>
-        /* Itinerary Section Styles */
+        /* --- General Layout --- */
         .trip-header-card {
             background: var(--bg-card);
             padding: 30px;
             border-radius: 20px;
             box-shadow: 0 4px 15px var(--shadow-color);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -49,12 +49,75 @@
             color: var(--blue);
         }
 
+        /* --- TABS NAVIGATION --- */
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--blue);
+        }
+
+        .tab-btn.active {
+            color: var(--blue);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--blue);
+        }
+
+        /* --- TAB CONTENT AREAS --- */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- GRID LAYOUT (Used for Itinerary, Checklist, and Members) --- */
         .itinerary-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 30px;
         }
 
+        /* --- ITINERARY SPECIFIC --- */
         .timeline {
             list-style: none;
             padding: 0;
@@ -126,29 +189,91 @@
             margin-top: 5px;
         }
 
-        .btn-delete-stop {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            color: #EF4444;
-            opacity: 0.6;
-            transition: 0.2s;
-        }
-
-        .btn-delete-stop:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
         .add-card {
             background: var(--bg-card);
             padding: 25px;
             border-radius: 16px;
             height: fit-content;
             border: 1px solid var(--border-color);
-            shadow: 0 4px 15px var(--shadow-color);
+            box-shadow: 0 4px 15px var(--shadow-color);
         }
 
+        /* --- CHECKLIST & MEMBERS STYLES --- */
+        .checklist-header-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .checklist-items-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+            transition: 0.2s;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .checklist-item.done span {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .progress-container {
+            background: var(--input-bg);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #10B981;
+            transition: width 0.3s ease;
+        }
+
+        .priority-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .p-high {
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+        }
+
+        .p-medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: #F59E0B;
+        }
+
+        .p-low {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+        }
+
+        /* --- FORM ELEMENTS --- */
         .form-group {
             margin-bottom: 20px;
             position: relative;
@@ -196,9 +321,44 @@
         .btn-add:hover {
             background: #2563EB;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-edit {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+        }
+
+        .btn-edit:hover {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-delete-stop {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #EF4444;
+            opacity: 0.6;
+            transition: 0.2s;
+        }
+
+        .btn-delete-stop:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Auto-suggestions */
         .suggestions-list {
             position: absolute;
             top: 100%;
@@ -236,16 +396,10 @@
 </head>
 
 <body>
-
     <div class="sidebar" id="sidebar">
         <div class="logo">
             <a href="{% url 'dashboard' %}" class="logo-content">
-                <div class="logo-icon-box">
-                    <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                    </svg>
-                </div>
+                <div class="logo-icon-box"><i class="fas fa-plane"></i></div>
                 <div class="logo-text"><span class="logo-title">SmartTravel</span><span
                         class="logo-subtitle">Manager</span></div>
             </a>
@@ -257,7 +411,8 @@
                         class="fas fa-th-large"></i><span>Dashboard</span></a>
                 <a href="{% url 'trip_list' %}" class="menu-item active"><i class="fas fa-suitcase"></i><span>My
                         Trips</span></a>
-                <a href="#" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i
+                        class="fas fa-clipboard-check"></i><span>Checklists</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
             </div>
             <div class="menu-section">
@@ -288,6 +443,7 @@
         </div>
 
         <div class="content-area">
+
             <div class="trip-header-card">
                 <div class="trip-title">
                     <h1>{{ trip.name }}</h1>
@@ -296,73 +452,378 @@
                         <i class="far fa-calendar-alt"></i> {{ trip.start_date }} to {{ trip.end_date }}
                     </div>
                 </div>
-                <a href="{% url 'trip_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Trips</a>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <a href="{% url 'trip_update' trip.pk %}" class="action-btn btn-edit" title="Edit Trip">
+                        <i class="fas fa-pen"></i>
+                    </a>
+                    <a href="{% url 'trip_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Trips</a>
+                </div>
             </div>
 
-            <div class="itinerary-grid">
-                <div>
-                    <h3 style="margin-bottom: 25px; color: var(--text-main); font-weight: 700;">Itinerary Timeline</h3>
-                    {% if stops %}
-                    <ul class="timeline">
-                        {% for stop in stops %}
-                        <li class="timeline-item">
-                            <div class="stop-card">
-                                <div class="stop-date">{{ stop.date }}</div>
-                                <div class="stop-location">{{ stop.location }}</div>
-                                {% if stop.notes %}
-                                <p class="stop-notes">{{ stop.notes }}</p>
-                                {% endif %}
-                                <a href="{% url 'delete_stop' stop.pk %}" class="btn-delete-stop"
-                                    onclick="return confirm('Remove this stop?')">
-                                    <i class="fas fa-trash"></i>
-                                </a>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <div
-                        style="text-align: center; color: var(--text-muted); padding: 60px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
-                        <i class="fas fa-route" style="font-size: 40px; margin-bottom: 15px; opacity: 0.3;"></i>
-                        <p style="font-weight: 500;">No stops added yet.</p>
-                        <p style="font-size: 13px; margin-top: 5px;">Use the form to plan your trip route.</p>
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="openTab('itinerary', this)">
+                    <i class="fas fa-route" style="margin-right: 5px;"></i> Itinerary
+                </button>
+                <button class="tab-btn" onclick="openTab('checklist', this)">
+                    <i class="fas fa-clipboard-list" style="margin-right: 5px;"></i> Packing List
+                </button>
+                <button class="tab-btn" onclick="openTab('members', this)">
+                    <i class="fas fa-users" style="margin-right: 5px;"></i> Members
+                </button>
+            </div>
+
+            <div id="itinerary" class="tab-content active">
+                <div class="itinerary-grid">
+                    <div>
+                        <h3 style="margin-bottom: 25px; color: var(--text-main); font-weight: 700;">Itinerary Timeline
+                        </h3>
+                        {% if stops %}
+                        <ul class="timeline">
+                            {% for stop in stops %}
+                            <li class="timeline-item">
+                                <div class="stop-card">
+                                    <div class="stop-date">{{ stop.date }}</div>
+                                    <div class="stop-location">{{ stop.location }}</div>
+                                    {% if stop.notes %}
+                                    <p class="stop-notes">{{ stop.notes }}</p>
+                                    {% endif %}
+                                    <div style="position: absolute; top: 15px; right: 15px; display: flex; gap: 10px;">
+                                        <a href="javascript:void(0)" class="btn-edit-stop" title="Edit Stop"
+                                            data-pk="{{ stop.pk }}" data-location="{{ stop.location|escapejs }}"
+                                            data-date="{{ stop.date|date:'Y-m-d' }}"
+                                            data-notes="{{ stop.notes|escapejs }}" onclick="handleEdit(this)"
+                                            style="color: var(--blue); opacity: 0.6; transition: 0.2s;">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="{% url 'delete_stop' stop.pk %}" class="btn-delete-stop"
+                                            onclick="return confirm('Remove this stop?')" title="Delete Stop"
+                                            style="position: static;">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div
+                            style="text-align: center; color: var(--text-muted); padding: 60px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
+                            <i class="fas fa-route" style="font-size: 40px; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p style="font-weight: 500;">No stops added yet.</p>
+                            <p style="font-size: 13px; margin-top: 5px;">Switch to the form to plan your trip route.</p>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                </div>
 
-                <div class="add-card">
-                    <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add New Stop</h4>
-                    <form method="POST" autocomplete="off">
-                        {% csrf_token %}
+                    <div class="add-card">
+                        <h4 id="form-title" style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add
+                            New Stop</h4>
+                        <form method="POST" autocomplete="off" id="stop-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="stop_id" id="stop_id">
 
-                        <div class="form-group">
-                            <label class="form-label">Location / City</label>
-                            {{ form.location }}
-                            <div id="suggestions" class="suggestions-list"></div>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label">Location / City</label>
+                                {{ form.location }}
+                                <div id="suggestions" class="suggestions-list"></div>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Arrival Date</label>
-                            {{ form.date }}
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label">Arrival Date</label>
+                                {{ form.date }}
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Notes (Optional)</label>
-                            {{ form.notes }}
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label">Notes (Optional)</label>
+                                {{ form.notes }}
+                            </div>
 
-                        <button type="submit" class="btn-add">Add to Itinerary</button>
-                    </form>
+                            <button type="submit" id="submit-btn" class="btn-add">Add to Itinerary</button>
+                            <button type="button" id="cancel-btn" class="btn-add"
+                                style="display: none; background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); margin-top: 10px;"
+                                onclick="resetForm()">Cancel Edit</button>
+                        </form>
+                    </div>
                 </div>
             </div>
+
+            <div id="checklist" class="tab-content">
+                <div class="itinerary-grid">
+                    <div>
+                        <div class="checklist-header-card">
+                            <div class="checklist-header" style="margin-bottom: 15px;">
+                                <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Packing
+                                    Status</h3>
+                                <span style="font-size:14px; font-weight:600; color:var(--blue);">{{ progress }}%
+                                    Ready</span>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: {{ progress }}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-items-container">
+                            {% for item in checklist_items %}
+                            <div class="checklist-item {% if item.is_done %}done{% endif %}">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <a href="{% url 'checklist_toggle' item.pk %}"
+                                        style="font-size: 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center;">
+                                        {% if item.is_done %}
+                                        <i class="fas fa-check-square" style="color: #10B981;"></i>
+                                        {% else %}
+                                        <i class="far fa-square"></i>
+                                        {% endif %}
+                                    </a>
+                                    <div>
+                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{item.item_name }}</span>
+                                        <span class="priority-badge p-{{ item.priority|lower }}"
+                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{item.priority }} Priority</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 15px;">
+                                    <a href="javascript:void(0)"
+                                        onclick="editChecklistItem('{{ item.pk }}', '{{ item.item_name|escapejs }}', '{{ item.priority }}')"
+                                        style="color: var(--blue); opacity: 0.6; transition: 0.2s;" title="Edit Item">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    <a href="{% url 'checklist_delete' item.pk %}"
+                                        onclick="return confirm('Delete this item?')"
+                                        style="color: #EF4444; opacity: 0.6; transition: 0.2s;" title="Delete Item">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                <i class="fas fa-suitcase-rolling"
+                                    style="font-size: 30px; margin-bottom: 15px; opacity: 0.3;"></i>
+                                <p style="font-size: 14px;">Your bag is empty.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="add-card" id="checklist-form-card">
+                        <h4 id="checklist-form-title"
+                            style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add Item</h4>
+                        <form method="POST" autocomplete="off" id="checklist-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="checklist_item_id" id="checklist_item_id">
+
+                            <div class="form-group">
+                                <label class="form-label">Item Name</label>
+                                <input type="text" name="item_name" id="id_item_name" class="form-control"
+                                    placeholder="e.g. Toothbrush, Visa..." required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Priority Level</label>
+                                <select name="priority" id="id_priority" class="form-control" style="cursor: pointer;">
+                                    <option value="High">High (Must Have)</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="Low">Low (Optional)</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" name="add_checklist_item" id="checklist-submit-btn" class="btn-add">
+                                <i class="fas fa-plus" style="margin-right: 8px;"></i> Add to List
+                            </button>
+
+                            <button type="button" id="checklist-cancel-btn" class="btn-add"
+                                style="display: none; background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); margin-top: 10px;"
+                                onclick="resetChecklistForm()">
+                                Cancel Edit
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="members" class="tab-content">
+                <div class="itinerary-grid">
+
+                    <div>
+                        <div class="checklist-header-card">
+                            <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">
+                                <i class="fas fa-user-friends" style="margin-right: 10px; color: var(--blue);"></i>
+                                Travel Companions
+                            </h3>
+                        </div>
+
+                        <div class="checklist-items-container">
+                            {% for member in members %}
+                            <div class="checklist-item">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div
+                                        style="width: 40px; height: 40px; background: var(--hover-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: 700;">
+                                        {{ member.name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{member.name }}</div>
+                                        {% if member.contact %}
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+                                            <i class="fas fa-address-book"
+                                                style="font-size: 11px; margin-right: 4px;"></i> {{ member.contact }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 15px;">
+                                    <a href="javascript:void(0)"
+                                        onclick="editMember('{{ member.pk }}', '{{ member.name|escapejs }}', '{{ member.contact|escapejs }}')"
+                                        style="color: var(--blue); opacity: 0.6; transition: 0.2s;" title="Edit">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    <a href="{% url 'delete_member' member.pk %}"
+                                        onclick="return confirm('Remove this member?')"
+                                        style="color: #EF4444; opacity: 0.6; transition: 0.2s;" title="Remove">
+                                        <i class="fas fa-user-minus"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+                                <i class="fas fa-user-plus"
+                                    style="font-size: 30px; margin-bottom: 15px; opacity: 0.3;"></i>
+                                <p>No members added yet.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="add-card" id="member-form-card">
+                        {% if request.session.pending_member and request.session.pending_member.trip_id == trip.pk %}
+                        <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Verify Member</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                            A code was sent to <strong>{{ request.session.pending_member.contact }}</strong>.
+                        </p>
+
+                        {% if messages %}
+                        {% for message in messages %}
+                        {% if 'warning' in message.tags or 'error' in message.tags %}
+                        <div class="alert-dismissible"
+                            style="padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); position: relative;">
+                            {{ message }}
+                            <span onclick="this.parentElement.style.display='none'"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; font-weight: bold; opacity: 0.7;">&times;</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+
+                        <form method="POST" autocomplete="off">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="form-label">Verification Code</label>
+                                <input type="text" name="code" class="form-control" placeholder="000000" maxlength="6"
+                                    required style="text-align: center; font-size: 20px; letter-spacing: 4px;">
+                            </div>
+                            <button type="submit" name="verify_code" class="btn-add">
+                                Confirm Code
+                            </button>
+                            <button type="submit" name="cancel_verification" class="btn-add"
+                                style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); margin-top: 10px;">
+                                Cancel
+                            </button>
+                        </form>
+                        {% else %}
+                        <h4 id="member-form-title"
+                            style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add Member</h4>
+
+                        {% if messages %}
+                        {% for message in messages %}
+                        {% if 'error' in message.tags and 'Verification' not in message.message %}
+                        <div class="alert-dismissible"
+                            style="padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); position: relative;">
+                            {{ message }}
+                            <span onclick="this.parentElement.style.display='none'"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; font-weight: bold; opacity: 0.7;">&times;</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+
+                        <form method="POST" autocomplete="off" id="member-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="member_id" id="member_id">
+
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" name="name" id="id_member_name" class="form-control"
+                                    placeholder="e.g. John Doe" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Contact Info</label>
+                                <input type="text" name="contact" id="id_member_contact" class="form-control"
+                                    placeholder="Email">
+                            </div>
+
+                            <button type="submit" name="add_member" id="member-submit-btn" class="btn-add">
+                                <i class="fas fa-user-plus" style="margin-right: 8px;"></i> Add Member
+                            </button>
+
+                            <button type="button" id="member-cancel-btn" class="btn-add"
+                                style="display: none; background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); margin-top: 10px;"
+                                onclick="resetMemberForm()">
+                                Cancel Edit
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
+        // --- TAB SWITCHING LOGIC ---
+        function openTab(tabName, btnElement) {
+            var contents = document.getElementsByClassName("tab-content");
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove("active");
+            }
+            var buttons = document.getElementsByClassName("tab-btn");
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            if (btnElement) {
+                btnElement.classList.add("active");
+            } else {
+                document.querySelector(`button[onclick="openTab('${tabName}', this)"]`).classList.add("active");
+            }
+            localStorage.setItem('activeTab', tabName);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const savedTab = localStorage.getItem('activeTab');
+            if (savedTab && document.getElementById(savedTab)) {
+                openTab(savedTab, null);
+            }
+        });
+
+        // --- THEME & SIDEBAR ---
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); }
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+            });
+        }
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+
+        // --- LOCATION AUTOCOMPLETE ---
         const input = document.getElementById('id_stop_location');
         const suggestionsBox = document.getElementById('suggestions');
         let timeout = null;
-
         if (input) {
             input.addEventListener('input', function () {
                 const query = this.value;
@@ -371,14 +832,12 @@
                 timeout = setTimeout(() => { fetchLocations(query); }, 300);
             });
         }
-
         function fetchLocations(query) {
             fetch(`https://photon.komoot.io/api/?q=${query}&limit=5`)
                 .then(response => response.json())
                 .then(data => {
                     suggestionsBox.innerHTML = '';
                     const seen = new Set();
-
                     if (data.features && data.features.length > 0) {
                         suggestionsBox.style.display = 'block';
                         data.features.forEach(feature => {
@@ -388,7 +847,6 @@
                             if (props.state) parts.push(props.state);
                             if (props.country) parts.push(props.country);
                             const fullLocation = parts.join(", ");
-
                             if (!seen.has(fullLocation)) {
                                 seen.add(fullLocation);
                                 const div = document.createElement('div');
@@ -402,29 +860,74 @@
                             }
                         });
                     } else { suggestionsBox.style.display = 'none'; }
-                })
-                .catch(err => console.error(err));
+                });
         }
-
         document.addEventListener('click', function (e) {
             if (input && e.target !== input && e.target !== suggestionsBox) {
                 suggestionsBox.style.display = 'none';
             }
         });
 
-        // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); }
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
-        });
+        // --- EDIT FUNCTIONS (Stops, Checklist, Members) ---
+        function handleEdit(btn) {
+            openTab('itinerary', document.querySelector('.tab-btn'));
+            const pk = btn.getAttribute('data-pk');
+            const location = btn.getAttribute('data-location');
+            const date = btn.getAttribute('data-date');
+            const notes = btn.getAttribute('data-notes');
+            editStop(pk, location, date, notes);
+        }
+        function editStop(pk, location, date, notes) {
+            document.getElementById('form-title').innerText = 'Edit Stop';
+            document.getElementById('stop_id').value = pk;
+            document.getElementById('id_stop_location').value = location;
+            document.querySelector('input[name="date"]').value = date;
+            document.querySelector('textarea[name="notes"]').value = notes;
+            document.getElementById('submit-btn').innerText = 'Update Stop';
+            document.getElementById('cancel-btn').style.display = 'block';
+            document.getElementById('stop-form').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetForm() {
+            document.getElementById('form-title').innerText = 'Add New Stop';
+            document.getElementById('stop_id').value = '';
+            document.getElementById('stop-form').reset();
+            document.getElementById('submit-btn').innerText = 'Add to Itinerary';
+            document.getElementById('cancel-btn').style.display = 'none';
+        }
 
-        // Sidebar Toggle
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+        function editChecklistItem(pk, name, priority) {
+            document.getElementById('checklist-form-title').innerText = 'Edit Item';
+            document.getElementById('checklist-submit-btn').innerHTML = '<i class="fas fa-save" style="margin-right: 8px;"></i> Update Item';
+            document.getElementById('checklist_item_id').value = pk;
+            document.getElementById('id_item_name').value = name;
+            document.getElementById('id_priority').value = priority;
+            document.getElementById('checklist-cancel-btn').style.display = 'block';
+            document.getElementById('checklist-form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetChecklistForm() {
+            document.getElementById('checklist-form-title').innerText = 'Add Item';
+            document.getElementById('checklist-submit-btn').innerHTML = '<i class="fas fa-plus" style="margin-right: 8px;"></i> Add to List';
+            document.getElementById('checklist_item_id').value = '';
+            document.getElementById('checklist-form').reset();
+            document.getElementById('checklist-cancel-btn').style.display = 'none';
+        }
+
+        function editMember(pk, name, contact) {
+            document.getElementById('member-form-title').innerText = 'Edit Member';
+            document.getElementById('member-submit-btn').innerHTML = '<i class="fas fa-save" style="margin-right: 8px;"></i> Update Member';
+            document.getElementById('member_id').value = pk;
+            document.getElementById('id_member_name').value = name;
+            document.getElementById('id_member_contact').value = contact;
+            document.getElementById('member-cancel-btn').style.display = 'block';
+            document.getElementById('member-form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetMemberForm() {
+            document.getElementById('member-form-title').innerText = 'Add Member';
+            document.getElementById('member-submit-btn').innerHTML = '<i class="fas fa-user-plus" style="margin-right: 8px;"></i> Add Member';
+            document.getElementById('member_id').value = '';
+            document.getElementById('member-form').reset();
+            document.getElementById('member-cancel-btn').style.display = 'none';
+        }
     </script>
 </body>
 

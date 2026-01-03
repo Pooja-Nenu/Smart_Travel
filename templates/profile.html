@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -297,7 +298,7 @@
                 <a href="{% url 'dashboard' %}" class="menu-item"><i
                         class="fas fa-th-large"></i><span>Dashboard</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-suitcase"></i><span>My Trips</span></a>
-                <a href="#" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
             </div>
             <div class="menu-section">

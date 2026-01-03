@@ -21,21 +21,26 @@
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px var(--shadow-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .trip-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
 
         .trip-header-gradient {
-            height: 100px;
+            height: 90px;
             background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
             position: relative;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding: 15px;
         }
 
         .trip-card:nth-child(2n) .trip-header-gradient {
@@ -51,62 +56,71 @@
         }
 
         .trip-body {
-            padding: 25px;
-            padding-top: 0;
+            padding: 20px 25px 25px;
             flex: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .trip-icon-box {
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             background: var(--bg-card);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             color: var(--text-main);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            margin-top: -30px;
-            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: absolute;
+            top: -28px;
+            left: 25px;
             border: 4px solid var(--bg-card);
+            transition: transform 0.3s ease;
+        }
+
+        .trip-card:hover .trip-icon-box {
+            transform: scale(1.05);
         }
 
         .trip-status {
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 10px;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            background: var(--input-bg);
-            color: var(--text-secondary);
-            align-self: flex-start;
-            margin-bottom: 10px;
+            letter-spacing: 0.8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .trip-title {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 5px;
+            margin-top: 35px;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
         }
 
         .trip-dest {
             font-size: 14px;
             color: var(--text-secondary);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            font-weight: 500;
         }
 
         .trip-meta {
             margin-top: auto;
             border-top: 1px solid var(--border-color);
-            padding-top: 15px;
+            padding-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -114,39 +128,45 @@
 
         .trip-dates {
             font-size: 13px;
-            font-weight: 500;
-            color: var(--text-muted);
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: 0.2s;
             text-decoration: none;
+            font-size: 14px;
         }
 
         .btn-edit {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(59, 130, 246, 0.08);
             color: #3B82F6;
         }
 
         .btn-edit:hover {
             background: #3B82F6;
             color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
         }
 
         .btn-delete {
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(239, 68, 68, 0.08);
             color: #EF4444;
         }
 
         .btn-delete:hover {
             background: #EF4444;
             color: white;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
         }
     </style>
 </head>
@@ -172,7 +192,7 @@
                         class="fas fa-th-large"></i><span>Dashboard</span></a>
                 <a href="{% url 'trip_list' %}" class="menu-item active"><i class="fas fa-suitcase"></i><span>My
                         Trips</span></a>
-                <a href="#" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
             </div>
             <div class="menu-section">
@@ -226,22 +246,24 @@
             <div class="trips-grid">
                 {% for tr in trips %}
                 <div class="trip-card">
-                    <div class="trip-header-gradient"></div>
+                    <div class="trip-header-gradient">
+                        <div class="trip-status">{{tr.days_left}}</div>
+                    </div>
                     <div class="trip-body">
                         <div class="trip-icon-box"><i class="fas fa-plane-departure"></i></div>
-                        <div class="trip-status">{{tr.days_left}}</div>
                         <h3 class="trip-title">
                             <a href="{% url 'trip_detail' tr.pk %}"
                                 style="text-decoration: none; color: inherit;">{{tr.name}}</a>
                         </h3>
-                        <div class="trip-dest"><i class="fas fa-map-marker-alt"></i> {{tr.destination}}</div>
+                        <div class="trip-dest"><i class="fas fa-map-marker-alt" style="color: var(--blue);"></i>
+                            {{tr.destination}}</div>
                         <div class="trip-meta">
                             <div class="trip-dates">
-                                <i class="far fa-calendar-alt"></i> {{tr.start_date|date:"M d"}} - {{tr.end_date|date:"M
-                                d, Y"}}
+                                <i class="far fa-calendar-alt" style="color: var(--orange);"></i>
+                                {{tr.start_date|date:"M d" }} - {{tr.end_date|date:"M d, Y" }}
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                <a href="{% url 'trip_update' tr.pk %}" class="action-btn btn-edit" title="Edit"><i
+                            <div style="display: flex; gap: 10px;">
+                                <a href="{% url 'trip_detail' tr.pk %}" class="action-btn btn-edit" title="Edit"><i
                                         class="fas fa-pen"></i></a>
                                 <a href="{% url 'trip_delete' tr.pk %}" class="action-btn btn-delete" title="Delete"><i
                                         class="fas fa-trash"></i></a>

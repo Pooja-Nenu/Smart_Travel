@@ -32,7 +32,7 @@
                         class="fas fa-th-large"></i><span>Dashboard</span></a>
                 <a href="{% url 'trip_list' %}" class="menu-item"><i class="fas fa-suitcase"></i><span>My
                         Trips</span></a>
-                <a href="#" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
             </div>
             <div class="menu-section">
@@ -149,8 +149,7 @@
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--blue);">{{t.start_date|date:"d
-                                M"}} - {{t.end_date|date:"d M"}}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--blue);">{{ t.start_date|date:"M d" }} - {{ t.end_date|date:"M d, Y" }}</div>
                             <div style="font-size: 11px; color: var(--text-muted);">{{t.days_left}}</div>
                         </div>
                     </div>
