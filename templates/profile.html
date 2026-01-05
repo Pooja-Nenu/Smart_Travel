@@ -20,6 +20,14 @@
             color: var(--text-main) !important;
         }
 
+        body.dark-mode .ts-control input {
+            color: var(--text-main) !important;
+        }
+
+        body.dark-mode .ts-control .item {
+            color: var(--text-main) !important;
+        }
+
         body.dark-mode .ts-dropdown .option {
             color: var(--text-main) !important;
         }
@@ -72,21 +80,6 @@
             background: #E2E8F0;
         }
 
-        .camera-icon {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background: var(--blue);
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid var(--bg-card);
-            cursor: pointer;
-        }
 
         .profile-info {
             margin-top: 15px;
@@ -210,6 +203,7 @@
             border-color: var(--border-color) !important;
         }
 
+
         .form-actions {
             margin-top: 25px;
             display: flex;
@@ -298,7 +292,8 @@
                 <a href="{% url 'dashboard' %}" class="menu-item"><i
                         class="fas fa-th-large"></i><span>Dashboard</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-suitcase"></i><span>My Trips</span></a>
-                <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i
+                        class="fas fa-clipboard-check"></i><span>Checklists</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
             </div>
             <div class="menu-section">
@@ -350,19 +345,22 @@
             <div class="profile-layout">
                 <div class="card profile-card">
                     <div class="profile-cover"></div>
-                    <div class="profile-img-container">
+                    <div style="padding: 0 20px 20px;">
                         <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=random&size=128"
-                            alt="Profile" class="profile-img">
-                        <div class="camera-icon"><i class="fas fa-camera"></i></div>
-                    </div>
-                    <div class="profile-info">
-                        <h3 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h3>
-                        <p class="profile-role">Travel Enthusiast 🌍</p>
-                    </div>
-                    <div class="profile-stats">
-                        <div><span class="p-stat-value">12</span><span class="p-stat-label">Trips</span></div>
-                        <div><span class="p-stat-value">5</span><span class="p-stat-label">Countries</span></div>
-                        <div><span class="p-stat-value">85</span><span class="p-stat-label">Photos</span></div>
+                            alt="Profile" class="profile-img"
+                            style="margin-top: -60px; border: 5px solid var(--bg-card);">
+
+                        <div style="margin-top: 15px;">
+                            <h3 class="profile-name" style="margin-bottom: 5px;">{{ user.first_name }} {{user.last_name}}</h3>
+                        </div>
+
+                        <div class="profile-stats"
+                            style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                            <div>
+                                <span class="p-stat-value">{{ trips_count }}</span>
+                                <span class="p-stat-label">Total Trips</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -389,8 +387,8 @@
                                         id="profileCountry" name="country">
                                         <option value="">Select Country...</option>
                                     </select></div>
-                                <div class="form-group"><label class="form-label">State / City</label><select
-                                        id="profileState" name="state" disabled>
+                                <div class="form-group"><label class="form-label">State</label><select id="profileState"
+                                        name="state" disabled>
                                         <option value="">Select State...</option>
                                     </select></div>
                             </div>
@@ -410,14 +408,29 @@
                             {% csrf_token %}
                             <input type="hidden" name="change_password" value="true">
                             <div class="form-grid">
+                                {% if password_form.non_field_errors %}
+                                <div class="full-width">
+                                    {% for error in password_form.non_field_errors %}
+                                    <div class="alert alert-error" style="margin-bottom: 10px; padding: 10px;">
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
                                 {% for field in password_form %}
                                 <div class="form-group full-width">
                                     <label class="form-label">{{ field.label }}</label>
                                     <input type="password" name="{{ field.name }}" class="form-control" required>
+                                    {% if field.help_text %}
+                                    <small class="text-muted"
+                                        style="font-size: 11px; margin-top: 2px; color: var(--text-muted);">{{field.help_text|safe }}</small>
+                                    {% endif %}
                                     {% if field.errors %}
                                     <small class="text-danger"
-                                        style="color:#e53e3e; font-size:12px; margin-top: 4px;">{{ field.errors.0
-                                        }}</small>
+                                        style="color:#e53e3e; font-size:12px; margin-top: 4px; font-weight: 600;">
+                                        <i class="fas fa-exclamation-triangle"></i> {{ field.errors.0 }}
+                                    </small>
                                     {% endif %}
                                 </div>
                                 {% endfor %}
@@ -429,73 +442,96 @@
                             </div>
                         </form>
                     </div>
-
                 </div>
             </div>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        // Dropdown Logic
-        let countryTom, stateTom;
-        const savedCountry = "{{ user.country|default:'' }}";
-        const savedState = "{{ user.state|default:'' }}";
+            <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+            <script>
+                // Dropdown Logic
+                let countryTom, stateTom;
+                const savedCountry = "{{ user.country|default:'' }}";
+                const savedState = "{{ user.state|default:'' }}";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            countryTom = new TomSelect("#profileCountry", { create: false, sortField: "text" });
-            stateTom = new TomSelect("#profileState", { create: false, sortField: "text", valueField: 'value', labelField: 'text' });
-            countryTom.on('change', (val) => loadStates(val));
-            fetchCountries();
-        });
+                document.addEventListener('DOMContentLoaded', () => {
+                    countryTom = new TomSelect("#profileCountry", {
+                        create: false,
+                        sortField: { field: "text", direction: "asc" },
+                        placeholder: "Select Country...",
+                        maxOptions: null
+                    });
+                    stateTom = new TomSelect("#profileState", {
+                        create: false,
+                        sortField: { field: "text", direction: "asc" },
+                        placeholder: "Select State...",
+                        valueField: 'value',
+                        labelField: 'text'
+                    });
 
-        function fetchCountries() {
-            fetch('https://countriesnow.space/api/v0.1/countries/iso').then(r => r.json()).then(data => {
-                if (!data.error) {
-                    const countries = data.data.map(c => ({ value: c.name, text: c.name }));
-                    countryTom.clearOptions(); countryTom.addOption(countries); countryTom.refreshOptions();
-                    if (savedCountry) { countryTom.setValue(savedCountry); loadStates(savedCountry, savedState); }
+                    countryTom.on('change', (val) => {
+                        countryTom.blur();
+                        loadStates(val);
+                    });
+
+                    stateTom.on('change', () => {
+                        stateTom.blur();
+                    });
+
+                    fetchCountries();
+                });
+
+                function fetchCountries() {
+                    fetch('https://countriesnow.space/api/v0.1/countries/iso').then(r => r.json()).then(data => {
+                        if (!data.error) {
+                            const countries = data.data.map(c => ({ value: c.name, text: c.name }));
+                            countryTom.clearOptions(); countryTom.addOption(countries); countryTom.refreshOptions();
+                            if (savedCountry) { countryTom.setValue(savedCountry); loadStates(savedCountry, savedState); }
+                        }
+                    });
                 }
-            });
-        }
 
-        function loadStates(country, preSelected = null) {
-            if (!country) return;
-            stateTom.clear(); stateTom.clearOptions(); stateTom.disable(); stateTom.settings.placeholder = "Loading..."; stateTom.sync();
-            fetch('https://countriesnow.space/api/v0.1/countries/states', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ country: country })
-            }).then(r => r.json()).then(data => {
-                stateTom.settings.placeholder = "Select State"; stateTom.enable();
-                if (!data.error && data.data.states.length > 0) {
-                    stateTom.addOption(data.data.states.map(s => ({ value: s.name, text: s.name })));
-                    if (preSelected) stateTom.setValue(preSelected);
-                } else { stateTom.addOption({ value: "N/A", text: "No states found" }); }
-                stateTom.sync();
-            });
-        }
+                function loadStates(country, preSelected = null) {
+                    if (!country) return;
+                    stateTom.clear(); stateTom.clearOptions(); stateTom.disable(); stateTom.settings.placeholder = "Loading..."; stateTom.sync();
+                    fetch('https://countriesnow.space/api/v0.1/countries/states', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ country: country })
+                    }).then(r => r.json()).then(data => {
+                        stateTom.settings.placeholder = "Select State"; stateTom.enable();
+                        if (!data.error && data.data.states.length > 0) {
+                            stateTom.addOption(data.data.states.map(s => ({ value: s.name, text: s.name })));
+                            if (preSelected) stateTom.setValue(preSelected);
+                        } else { stateTom.addOption({ value: "N/A", text: "No states found" }); }
+                        stateTom.sync();
+                    });
+                }
 
-        // Shared Logic
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+                // Shared Logic
+                const menuToggle = document.getElementById('menuToggle');
+                const sidebar = document.getElementById('sidebar');
+                if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
 
-        const userProfileBtn = document.getElementById('userProfileBtn');
-        const profileMenu = document.getElementById('profileMenu');
-        if (userProfileBtn) {
-            userProfileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileMenu.classList.toggle('show'); });
-            window.addEventListener('click', (e) => { if (!profileMenu.contains(e.target)) profileMenu.classList.remove('show'); });
-        }
+                const userProfileBtn = document.getElementById('userProfileBtn');
+                const profileMenu = document.getElementById('profileMenu');
+                if (userProfileBtn) {
+                    userProfileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileMenu.classList.toggle('show'); });
+                    window.addEventListener('click', (e) => { if (!profileMenu.contains(e.target)) profileMenu.classList.remove('show'); });
+                }
 
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        const icon = themeToggle ? themeToggle.querySelector('i') : null;
-        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } }
-        if (themeToggle) themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
-            if (icon) icon.classList.toggle('fa-sun'); icon.classList.toggle('fa-moon');
-        });
-    </script>
+                const themeToggle = document.getElementById('themeToggle');
+                const body = document.body;
+                const icon = themeToggle ? themeToggle.querySelector('i') : null;
+                if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } }
+                if (themeToggle) themeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-mode');
+                    localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+                    if (icon) {
+                        if (body.classList.contains('dark-mode')) {
+                            icon.classList.replace('fa-moon', 'fa-sun');
+                        } else {
+                            icon.classList.replace('fa-sun', 'fa-moon');
+                        }
+                    }
+                });
+            </script>
 </body>
 
 </html>

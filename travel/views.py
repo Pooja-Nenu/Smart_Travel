@@ -67,6 +67,7 @@ def register_view(request):
 def profile_view(request):
     user = request.user
     password_form = PasswordChangeForm(user) # Default empty form
+    trips_count = Trip.objects.filter(user=user).count()
 
     if request.method == 'POST':
         # --- ACTION 1: UPDATE PROFILE ---
@@ -76,6 +77,7 @@ def profile_view(request):
             user.country = request.POST.get('country', user.country)
             user.state = request.POST.get('state', user.state)
             user.save()
+            messages.success(request, "Profile updated successfully!")
             return redirect('profile')
 
         # --- ACTION 2: CHANGE PASSWORD ---
@@ -83,14 +85,15 @@ def profile_view(request):
             password_form = PasswordChangeForm(user, request.POST)
             if password_form.is_valid():
                 user = password_form.save()
-                # Important: This keeps the user logged in after password change
-                update_session_auth_hash(request, user) 
-                return redirect('profile')
+                messages.success(request, "Password updated successfully! Please log in with your new password.")
+                return redirect('login')
             else:
-                messages.error(request, "Error changing password. Please check the fields.")
+                # Specific errors will be shown next to the fields in the form
+                pass
 
     return render(request, 'profile.html', {
-        'password_form': password_form
+        'password_form': password_form,
+        'trips_count': trips_count
     })
 
 # TRIP LIST VIEW

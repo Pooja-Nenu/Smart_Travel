@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard-design.css' %}">
     <style>
-        .page-header { margin-bottom: 30px; }
-        .page-title { font-size: 24px; font-weight: 800; color: var(--text-main); }
-        
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
         /* Grid Layout */
         .dashboard-grid {
             display: grid;
@@ -31,18 +39,49 @@
             align-items: center;
             justify-content: space-between;
         }
+
         .trip-progress-card:hover {
             transform: translateY(-3px);
             border-color: var(--blue);
             box-shadow: 0 4px 15px var(--shadow-color);
         }
-        .trip-info h4 { margin: 0; color: var(--text-main); font-size: 16px; }
-        .trip-info p { margin: 5px 0 0; color: var(--text-muted); font-size: 13px; }
-        
-        .progress-section { width: 40%; }
-        .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--text-secondary); }
-        .progress-bar-bg { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: var(--blue); border-radius: 4px; }
+
+        .trip-info h4 {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 16px;
+        }
+
+        .trip-info p {
+            margin: 5px 0 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .progress-section {
+            width: 40%;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: var(--input-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--blue);
+            border-radius: 4px;
+        }
 
         /* Urgent Items Section */
         .urgent-card {
@@ -52,20 +91,43 @@
             padding: 25px;
             height: fit-content;
         }
+
         .urgent-item {
             display: flex;
             align-items: center;
             padding: 12px 0;
             border-bottom: 1px solid var(--border-color);
         }
-        .urgent-item:last-child { border-bottom: none; }
-        .urgent-text { margin-left: 10px; }
-        .urgent-trip-name { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .urgent-name { font-size: 14px; color: var(--text-main); font-weight: 500; }
 
-        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .urgent-item:last-child {
+            border-bottom: none;
+        }
+
+        .urgent-text {
+            margin-left: 10px;
+        }
+
+        .urgent-trip-name {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .urgent-name {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <div class="sidebar" id="sidebar">
@@ -79,15 +141,19 @@
         <div class="sidebar-menu">
             <div class="menu-section">
                 <div class="menu-label">Main Menu</div>
-                <a href="{% url 'dashboard' %}" class="menu-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
-                <a href="{% url 'trip_list' %}" class="menu-item"><i class="fas fa-suitcase"></i><span>My Trips</span></a>
-                <a href="{% url 'checklist_dashboard' %}" class="menu-item active"><i class="fas fa-clipboard-check"></i><span>Checklists</span></a>
+                <a href="{% url 'dashboard' %}" class="menu-item"><i
+                        class="fas fa-th-large"></i><span>Dashboard</span></a>
+                <a href="{% url 'trip_list' %}" class="menu-item"><i class="fas fa-suitcase"></i><span>My
+                        Trips</span></a>
+                <a href="{% url 'checklist_dashboard' %}" class="menu-item active"><i
+                        class="fas fa-clipboard-check"></i><span>Checklists</span></a>
                 <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
             </div>
             <div class="menu-section">
                 <div class="menu-label">Settings</div>
                 <a href="{% url 'profile' %}" class="menu-item"><i class="fas fa-user-cog"></i><span>Profile</span></a>
-                <a href="{% url 'logout' %}" class="menu-item logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+                <a href="{% url 'logout' %}" class="menu-item logout"><i
+                        class="fas fa-sign-out-alt"></i><span>Logout</span></a>
             </div>
         </div>
     </div>
@@ -99,25 +165,39 @@
                 <div class="topbar-title">Checklist Overview</div>
             </div>
             <div class="topbar-right">
-                 <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
+                <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
             </div>
         </div>
 
         <div class="content-area">
+            {% if not user.first_name or not user.last_name or not user.country or not user.state %}
+            <div class="alert alert-warning"
+                style="background-color: #FFFBEB; border: 1px solid #FEF3C7; color: #92400E; padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 18px;"></i>
+                    <span style="font-weight: 500;">Please complete your personal details  to
+                        get the best experience.</span>
+                </div>
+                
+            </div>
+            {% endif %}
+
             <div class="page-header">
                 <h2 class="page-title">Packing Status</h2>
-                <p style="color: var(--text-secondary); font-size: 14px;">Track your preparedness for all upcoming trips.</p>
+                <p style="color: var(--text-secondary); font-size: 14px;">Track your preparedness for all upcoming
+                    trips.</p>
             </div>
 
             <div class="dashboard-grid">
-                
+
                 <div class="trips-section">
                     {% for trip in trips %}
                     <a href="{% url 'trip_detail' trip.pk %}" style="text-decoration: none;">
                         <div class="trip-progress-card">
                             <div class="trip-info">
                                 <h4>{{ trip.name }}</h4>
-                                <p><i class="fas fa-map-marker-alt"></i> {{ trip.destination }} • {{ trip.days_left }}</p>
+                                <p><i class="fas fa-map-marker-alt"></i> {{ trip.destination }} • {{ trip.days_left }}
+                                </p>
                             </div>
                             <div class="progress-section">
                                 <div class="progress-label">
@@ -125,7 +205,8 @@
                                     <span>{{ trip.progress }}%</span>
                                 </div>
                                 <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: {{ trip.progress }}%; 
+                                    <div class="progress-bar-fill"
+                                        style="width: {{ trip.progress }}%; 
                                         background: {% if trip.progress == 100 %}#10B981{% elif trip.progress < 30 %}#EF4444{% else %}#3B82F6{% endif %};">
                                     </div>
                                 </div>
@@ -136,7 +217,8 @@
                         </div>
                     </a>
                     {% empty %}
-                    <div style="text-align: center; padding: 50px; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 16px;">
+                    <div
+                        style="text-align: center; padding: 50px; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 16px;">
                         No trips found. <a href="{% url 'trip_create' %}">Create a trip</a> to start packing!
                     </div>
                     {% endfor %}
@@ -144,27 +226,30 @@
 
                 <div class="urgent-section">
                     <div class="urgent-card">
-                        <h4 style="margin-top: 0; margin-bottom: 20px; color: #EF4444; display: flex; align-items: center; gap: 10px;">
+                        <h4
+                            style="margin-top: 0; margin-bottom: 20px; color: #EF4444; display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-exclamation-circle"></i> High Priority
                         </h4>
-                        
+
                         {% if urgent_items %}
-                            {% for item in urgent_items %}
-                            <div class="urgent-item">
-                                <a href="{% url 'trip_detail' item.trip.pk %}" style="color: var(--text-muted); font-size: 18px;">
-                                    <i class="far fa-square"></i>
-                                </a>
-                                <div class="urgent-text">
-                                    <div class="urgent-name">{{ item.item_name }}</div>
-                                    <div class="urgent-trip-name">For: {{ item.trip.name }}</div>
-                                </div>
+                        {% for item in urgent_items %}
+                        <div class="urgent-item">
+                            <a href="{% url 'trip_detail' item.trip.pk %}"
+                                style="color: var(--text-muted); font-size: 18px;">
+                                <i class="far fa-square"></i>
+                            </a>
+                            <div class="urgent-text">
+                                <div class="urgent-name">{{ item.item_name }}</div>
+                                <div class="urgent-trip-name">For: {{ item.trip.name }}</div>
                             </div>
-                            {% endfor %}
+                        </div>
+                        {% endfor %}
                         {% else %}
-                            <div style="text-align: center; color: var(--text-muted); font-size: 13px;">
-                                <i class="fas fa-check-circle" style="color: #10B981; font-size: 24px; margin-bottom: 10px;"></i>
-                                <p>All high priority items are packed!</p>
-                            </div>
+                        <div style="text-align: center; color: var(--text-muted); font-size: 13px;">
+                            <i class="fas fa-check-circle"
+                                style="color: #10B981; font-size: 24px; margin-bottom: 10px;"></i>
+                            <p>All high priority items are packed!</p>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -172,18 +257,18 @@
             </div>
         </div>
     </div>
-    
+
     <script src="{% static 'js/script.js' %}"></script>
     <script>
         // Minimal Script for Sidebar/Theme Toggle if not in script.js
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
-        if(menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
-        
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
         if (localStorage.getItem('theme') === 'dark') body.classList.add('dark-mode');
-        if(themeToggle) {
+        if (themeToggle) {
             themeToggle.addEventListener('click', () => {
                 body.classList.toggle('dark-mode');
                 localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
@@ -191,4 +276,5 @@
         }
     </script>
 </body>
+
 </html>
