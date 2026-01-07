@@ -79,3 +79,23 @@ class GroupMember(models.Model):
     
     def __str__(self):
         return self.name
+
+class Expense(models.Model):
+    CATEGORY_CHOICES = [
+        ('Food', 'Food'),
+        ('Travel', 'Travel'),
+        ('Stay', 'Stay'),
+        ('Shopping', 'Shopping'),
+        ('Other', 'Other'),
+    ]
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='expenses')
+    title = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    paid_by = models.ForeignKey(GroupMember, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='Other')
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.amount}"

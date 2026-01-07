@@ -470,6 +470,9 @@
                 <button class="tab-btn" onclick="openTab('members', this)">
                     <i class="fas fa-users" style="margin-right: 5px;"></i> Members
                 </button>
+                <button class="tab-btn" onclick="openTab('expenses', this)">
+                    <i class="fas fa-wallet" style="margin-right: 5px;"></i> Expenses
+                </button>
             </div>
 
             <div id="itinerary" class="tab-content active">
@@ -575,9 +578,9 @@
                                         {% endif %}
                                     </a>
                                     <div>
-                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{item.item_name }}</span>
+                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
                                         <span class="priority-badge p-{{ item.priority|lower }}"
-                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{item.priority }} Priority</span>
+                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{ item.priority }} Priority</span>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 15px;">
@@ -659,7 +662,8 @@
                                         {{ member.name|first|upper }}
                                     </div>
                                     <div>
-                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{member.name }}</div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">
+                                            {{member.name }}</div>
                                         {% if member.contact %}
                                         <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
                                             <i class="fas fa-address-book"
@@ -773,6 +777,106 @@
                         {% endif %}
                     </div>
 
+                </div>
+            </div>
+
+            <div id="expenses" class="tab-content">
+                <div class="itinerary-grid">
+                    <div>
+                        <div class="checklist-header-card">
+                            <div class="checklist-header" style="margin-bottom: 15px;">
+                                <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Total
+                                    Expenses</h3>
+                                <span style="font-size:18px; font-weight:700; color:var(--blue);">${{ total_expense|floatformat:2 }}</span>
+                            </div>
+                        </div>
+
+                        <div class="checklist-items-container">
+                            {% for expense in expenses %}
+                            <div class="checklist-item">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div
+                                        style="width: 40px; height: 40px; background: var(--hover-bg); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--blue);">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{ expense.title }}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                            <span class="priority-badge p-low"
+                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{ expense.category }}</span>
+                                            &bull; Paid by {{ expense.paid_by.name|default:"Owner" }} &bull; {{ expense.date }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 20px;">
+                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount }}</span>
+                                    <div style="display: flex; gap: 10px;">
+                                        <a href="javascript:void(0)"
+                                            onclick="editExpense('{{ expense.pk }}', '{{ expense.title|escapejs }}', '{{ expense.amount }}', '{{ expense.paid_by.pk|default:'' }}', '{{ expense.category }}', '{{ expense.date|date:'Y-m-d' }}')"
+                                            style="color: var(--blue); opacity: 0.6;" title="Edit">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="{% url 'delete_expense' expense.pk %}"
+                                            onclick="return confirm('Delete this expense?')"
+                                            style="color: #EF4444; opacity: 0.6;" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+                                <i class="fas fa-calculator"
+                                    style="font-size: 30px; margin-bottom: 15px; opacity: 0.3;"></i>
+                                <p>No expenses recorded yet.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="add-card" id="expense-form-card">
+                        <h4 id="expense-form-title"
+                            style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add Expense</h4>
+                        <form method="POST" autocomplete="off" id="expense-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="expense_id" id="expense_id">
+
+                            <div class="form-group">
+                                <label class="form-label">Expense Title</label>
+                                {{ expense_form.title }}
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Amount</label>
+                                    {{ expense_form.amount }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Date</label>
+                                    {{ expense_form.date }}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Paid By</label>
+                                {{ expense_form.paid_by }}
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                {{ expense_form.category }}
+                            </div>
+
+                            <button type="submit" name="add_expense" id="expense-submit-btn" class="btn-add">
+                                <i class="fas fa-plus" style="margin-right: 8px;"></i> Save Expense
+                            </button>
+                            <button type="button" id="expense-cancel-btn" class="btn-add"
+                                style="display: none; background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); margin-top: 10px;"
+                                onclick="resetExpenseForm()">
+                                Cancel Edit
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -927,6 +1031,29 @@
             document.getElementById('member_id').value = '';
             document.getElementById('member-form').reset();
             document.getElementById('member-cancel-btn').style.display = 'none';
+        }
+
+        function editExpense(pk, title, amount, paid_by, category, date) {
+            document.getElementById('expense-form-title').innerText = 'Edit Expense';
+            document.getElementById('expense-submit-btn').innerHTML = '<i class="fas fa-save" style="margin-right: 8px;"></i> Update Expense';
+            document.getElementById('expense_id').value = pk;
+
+            // Django forms prefix IDs with 'id_'
+            document.querySelector('[name="title"]').value = title;
+            document.querySelector('[name="amount"]').value = amount;
+            document.querySelector('[name="paid_by"]').value = paid_by;
+            document.querySelector('[name="category"]').value = category;
+            document.querySelector('[name="date"]').value = date;
+
+            document.getElementById('expense-cancel-btn').style.display = 'block';
+            document.getElementById('expense-form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetExpenseForm() {
+            document.getElementById('expense-form-title').innerText = 'Add Expense';
+            document.getElementById('expense-submit-btn').innerHTML = '<i class="fas fa-plus" style="margin-right: 8px;"></i> Save Expense';
+            document.getElementById('expense_id').value = '';
+            document.getElementById('expense-form').reset();
+            document.getElementById('expense-cancel-btn').style.display = 'none';
         }
     </script>
 </body>

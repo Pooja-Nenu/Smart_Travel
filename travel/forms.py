@@ -1,7 +1,7 @@
 # travel/forms.py
 from django import forms
 from django.contrib.auth import authenticate
-from .models import CustomUser,Trip,TripItinerary,ChecklistItem,GroupMember
+from .models import CustomUser,Trip,TripItinerary,ChecklistItem,GroupMember,Expense
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Password")
@@ -129,4 +129,16 @@ class GroupMemberForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
             'contact': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email (Optional)'}),
+        }
+
+class ExpenseForm(forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields = ['title', 'amount', 'paid_by', 'category', 'date']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Dinner at Beach'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00'}),
+            'paid_by': forms.Select(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }

@@ -41,4 +41,5 @@ urlpatterns = [
     path('checklist/delete/<int:pk>/', views.checklist_delete, name='checklist_delete'),
     path('checklists/', views.checklist_dashboard, name='checklist_dashboard'),
     path('members/delete/<int:pk>/', views.delete_member, name='delete_member'),
+    path('expenses/delete/<int:pk>/', views.delete_expense, name='delete_expense'),
 ]

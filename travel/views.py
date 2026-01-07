@@ -7,8 +7,8 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.db.models import Case, When, Value, IntegerField
 from .forms import UserRegistrationForm, UserLoginForm
-from .models import Trip, TripItinerary, ChecklistItem, GroupMember
-from .forms import TripForm, ItineraryForm, ChecklistForm, GroupMemberForm
+from .models import Trip, TripItinerary, ChecklistItem, GroupMember, Expense
+from .forms import TripForm, ItineraryForm, ChecklistForm, GroupMemberForm, ExpenseForm
 import random
 from django.conf import settings
 from django.core.mail import send_mail
@@ -161,10 +161,17 @@ def trip_detail(request, pk):
     completed_items = checklist_items.filter(is_done=True).count()
     progress = int((completed_items / total_items) * 100) if total_items > 0 else 0
 
+    # Expense Logic
+    expenses = trip.expenses.all().order_by('-date')
+    total_expense = sum(e.amount for e in expenses)
+
     # Initialize Forms
     form = ItineraryForm()
     checklist_form = ChecklistForm()
     member_form = GroupMemberForm()
+    expense_form = ExpenseForm()
+    # Limit paid_by choices to members of this trip
+    expense_form.fields['paid_by'].queryset = GroupMember.objects.filter(trip=trip)
 
     if request.method == 'POST':
         # --- 1. MEMBER FORM ---
@@ -260,6 +267,21 @@ def trip_detail(request, pk):
                 stop.save()
                 return redirect('trip_detail', pk=pk)
 
+        # --- 4. EXPENSE FORM ---
+        elif 'add_expense' in request.POST:
+            expense_id = request.POST.get('expense_id')
+            if expense_id:
+                expense_instance = get_object_or_404(Expense, pk=expense_id, trip=trip)
+                expense_form = ExpenseForm(request.POST, instance=expense_instance)
+            else:
+                expense_form = ExpenseForm(request.POST)
+
+            if expense_form.is_valid():
+                expense = expense_form.save(commit=False)
+                expense.trip = trip
+                expense.save()
+                return redirect('trip_detail', pk=pk)
+
     return render(request, 'trip_detail.html', {
         'trip': trip,
         'stops': stops,
@@ -268,7 +290,10 @@ def trip_detail(request, pk):
         'checklist_items': checklist_items,
         'checklist_form': checklist_form,
         'member_form': member_form,
-        'progress': progress
+        'progress': progress,
+        'expenses': expenses,
+        'expense_form': expense_form,
+        'total_expense': total_expense
     })
     
 @login_required
@@ -324,6 +349,14 @@ def delete_stop(request, pk):
     trip_pk = stop.trip.pk 
     if stop.trip.user == request.user: 
         stop.delete()
+    return redirect('trip_detail', pk=trip_pk)
+
+@login_required
+def delete_expense(request, pk):
+    expense = get_object_or_404(Expense, pk=pk)
+    trip_pk = expense.trip.pk
+    if expense.trip.user == request.user:
+        expense.delete()
     return redirect('trip_detail', pk=trip_pk)
 
 def logout_view(request):
