@@ -577,11 +577,9 @@
                                         {% endif %}
                                     </a>
                                     <div>
-                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{
-                                            item.item_name }}</span>
+                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
                                         <span class="priority-badge p-{{ item.priority|lower }}"
-                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{
-                                            item.priority }} Priority</span>
+                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{ item.priority }} Priority</span>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 15px;">
@@ -785,8 +783,7 @@
                             <div class="checklist-header" style="margin-bottom: 15px;">
                                 <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Total
                                     Expenses</h3>
-                                <span style="font-size:18px; font-weight:700; color:var(--blue);">${{
-                                    total_expense|floatformat:2 }}</span>
+                                <span style="font-size:18px; font-weight:700; color:var(--blue);">${{total_expense|floatformat:2 }}</span>
                             </div>
                         </div>
 
@@ -799,20 +796,16 @@
                                         <i class="fas fa-receipt"></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{
-                                            expense.title }}</div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{ expense.title }}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
                                             <span class="priority-badge p-low"
-                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{
-                                                expense.category }}</span>
-                                            &bull; Paid by {{ expense.paid_by.name|default:"Owner" }} &bull; {{
-                                            expense.date }}
+                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{ expense.category }}</span>
+                                            &bull; Paid by {{ expense.paid_by.name|default:"Owner" }} &bull; {{expense.date }}
                                         </div>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 20px;">
-                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount
-                                        }}</span>
+                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount }}</span>
                                     <div style="display: flex; gap: 10px;">
                                         <a href="javascript:void(0)"
                                             onclick="editExpense('{{ expense.pk }}', '{{ expense.title|escapejs }}', '{{ expense.amount }}', '{{ expense.paid_by.pk|default:'' }}', '{{ expense.category }}', '{{ expense.date|date:'Y-m-d' }}')"
