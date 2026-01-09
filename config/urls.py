@@ -9,5 +9,7 @@ urlpatterns = [
     path('', include('travel.urls')),
 ]
 if settings.DEBUG:
-    # Explicitly use STATICFILES_DIRS[0] to tell Django exactly where to look
+    # Serve static files
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+    # Serve media files (user uploads)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

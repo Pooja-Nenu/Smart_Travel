@@ -42,4 +42,8 @@ urlpatterns = [
     path('checklists/', views.checklist_dashboard, name='checklist_dashboard'),
     path('members/delete/<int:pk>/', views.delete_member, name='delete_member'),
     path('expenses/delete/<int:pk>/', views.delete_expense, name='delete_expense'),
+    
+    path('trips/<int:pk>/upload-photos/', views.upload_trip_photos, name='upload_trip_photos'),
+    path('face-group/rename/<int:group_id>/', views.rename_face_group, name='rename_face_group'),
 ]
+
