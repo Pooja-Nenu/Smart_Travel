@@ -169,6 +169,7 @@ class FaceGroup(models.Model):
         related_name='face_groups'
     )
     name = models.CharField(max_length=100, default="Unknown Person")
+    thumbnail = models.ImageField(upload_to='face_thumbnails/', null=True, blank=True)
     representative_encoding = models.BinaryField()
 
     def __str__(self):
@@ -187,3 +188,19 @@ class PhotoFaceRelation(models.Model):
         on_delete=models.CASCADE,
         related_name='tagged_photos'
     )
+
+
+class FaceMergeSuggestion(models.Model):
+    """Stores a suggestion to merge two potentially identical people"""
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='merge_suggestions')
+    group_a = models.ForeignKey(FaceGroup, on_delete=models.CASCADE, related_name='suggestions_as_a')
+    group_b = models.ForeignKey(FaceGroup, on_delete=models.CASCADE, related_name='suggestions_as_b')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Prevent duplicate suggestions for the same pair
+        unique_together = ('group_a', 'group_b')
+
+    def __str__(self):
+        return f"Suggest merge: {self.group_a.name} & {self.group_b.name}"

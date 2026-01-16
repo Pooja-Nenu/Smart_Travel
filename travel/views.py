@@ -15,7 +15,7 @@ from .forms import (
 
 from .models import (
     Trip, TripItinerary, ChecklistItem, GroupMember,
-    Expense, CustomUser, TripPhoto, FaceGroup
+    Expense, CustomUser, TripPhoto, FaceGroup, PhotoFaceRelation, FaceMergeSuggestion
 )
 
 from .utils import process_photo_faces
@@ -164,6 +164,7 @@ def trip_detail(request, pk):
     stops = trip.itinerary.all()
     members = trip.companions.all()
     face_groups = trip.face_groups.all().prefetch_related('tagged_photos__photo')
+    all_photos = trip.photos.all().order_by('-uploaded_at')
 
     checklist_items = trip.checklist.annotate(
         priority_val=Case(
@@ -272,6 +273,9 @@ def trip_detail(request, pk):
                 expense.save()
             return redirect('trip_detail', pk=pk)
 
+    # NEW: Fetch active merge suggestions
+    suggestions = trip.merge_suggestions.filter(is_active=True)
+
     return render(request, 'trip_detail.html', {
         'trip': trip,
         'stops': stops,
@@ -285,12 +289,17 @@ def trip_detail(request, pk):
         'expense_form': expense_form,
         'total_expense': total_expense,
         'face_groups': face_groups,
+        'all_photos': all_photos,
+        'suggestions': suggestions, # Added suggestions to context
     })
 
 
 @login_required
 def upload_trip_photos(request, pk):
-    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    trip = get_object_or_404(
+        Trip.objects.filter(Q(user=request.user) | Q(members=request.user)).distinct(),
+        pk=pk
+    )
     images = request.FILES.getlist('images')
     for img in images:
         photo = TripPhoto.objects.create(trip=trip, image=img)
@@ -300,8 +309,21 @@ def upload_trip_photos(request, pk):
 
 
 @login_required
+def delete_trip_photo(request, pk):
+    photo = get_object_or_404(TripPhoto, pk=pk)
+    trip = photo.trip
+    if request.user == trip.user or request.user in trip.members.all():
+        photo.delete()
+        messages.success(request, "Photo removed.")
+    return redirect('trip_detail', pk=trip.pk)
+
+
+@login_required
 def rename_face_group(request, group_id):
-    group = get_object_or_404(FaceGroup, id=group_id, trip__user=request.user)
+    group = get_object_or_404(
+        FaceGroup.objects.filter(Q(trip__user=request.user) | Q(trip__members=request.user)).distinct(),
+        id=group_id
+    )
     if request.method == 'POST':
         new_name = request.POST.get('folder_name')
         if new_name:
@@ -388,3 +410,38 @@ def checklist_dashboard(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+@login_required
+def manage_face_suggestion(request, suggestion_id, action):
+    suggestion = get_object_or_404(FaceMergeSuggestion, id=suggestion_id)
+    trip = suggestion.trip
+    
+    # Permission check
+    if request.user != trip.user and request.user not in trip.members.all():
+        return redirect('trip_detail', pk=trip.pk)
+    
+    if action == 'merge':
+        group_a = suggestion.group_a # Destination (often the named one)
+        group_b = suggestion.group_b # Source (often the new 'unknown' one)
+        
+        # Move all photos from B to A
+        relations_to_move = PhotoFaceRelation.objects.filter(face_group=group_b)
+        for rel in relations_to_move:
+            # Only move if photo isn't already in A
+            if not PhotoFaceRelation.objects.filter(photo=rel.photo, face_group=group_a).exists():
+                rel.face_group = group_a
+                rel.save()
+            else:
+                rel.delete() # Duplicate link
+        
+        # Delete the redundant group
+        group_b.delete()
+        messages.success(request, f"Profiles merged successfully!")
+        
+    elif action == 'dismiss':
+        suggestion.is_active = False
+        suggestion.save()
+        messages.info(request, "Suggestion dismissed.")
+        
+    return redirect('trip_detail', pk=trip.pk)
