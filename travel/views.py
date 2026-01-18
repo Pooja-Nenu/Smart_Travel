@@ -8,6 +8,9 @@ from django.conf import settings
 from django.core.mail import send_mail
 import random
 from datetime import date
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa # PDF generation
 
 from .forms import (
     UserRegistrationForm, UserLoginForm, TripForm,
@@ -531,3 +534,49 @@ def manage_face_suggestion(request, suggestion_id, action):
         
     return redirect('trip_detail', pk=trip.pk)
 
+@login_required
+def export_trip_pdf(request, pk):
+    trip = get_object_or_404(Trip, pk=pk)
+    
+    # બધો જરૂરી ડેટા ભેગો કરો (જેમ trip_detail માં કર્યો હતો)
+    expenses = trip.expenses.all()
+    members = trip.companions.all()
+    stops = trip.itinerary.all()
+    checklist = trip.checklist.all()
+    
+    # કુલ ખર્ચ અને ભાગીદારીની ગણતરી
+    total_expense = sum(e.amount for e in expenses)
+    num_members = members.count()
+    share = total_expense / num_members if num_members > 0 else 0
+    
+    # સેટલમેન્ટ લોજિક (ટૂંકમાં)
+    member_balances = []
+    for m in members:
+        paid = sum(e.amount for e in expenses if e.paid_by == m)
+        member_balances.append({'name': m.name, 'paid': paid, 'diff': paid - share})
+
+    context = {
+        'trip': trip,
+        'expenses': expenses,
+        'total_expense': total_expense,
+        'members': members,
+        'stops': stops,
+        'checklist': checklist,
+        'share': share,
+        'member_balances': member_balances,
+    }
+
+    # PDF ટેમ્પ્લેટ લોડ કરો
+    template = get_template('trip_pdf.html')
+    html = template.render(context)
+    
+    # Response તૈયાર કરો
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Trip_Report_{trip.name}.pdf"'
+    
+    # HTML ને PDF માં કન્વર્ટ કરો
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse('We had some errors <pre>' + html + '</pre>')
+    return response

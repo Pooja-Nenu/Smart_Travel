@@ -622,6 +622,9 @@
                     <a href="{% url 'trip_update' trip.pk %}" class="action-btn btn-edit" title="Edit Trip">
                         <i class="fas fa-pen"></i>
                     </a>
+                    <a href="{% url 'export_trip_pdf' trip.pk %}" class="action-btn" style="background: rgba(16, 185, 129, 0.1); color: #10B981;" title="Download PDF Report">
+                        <i class="fas fa-file-pdf"></i>
+                    </a>
                     <a href="{% url 'trip_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Trips</a>
                 </div>
             </div>
