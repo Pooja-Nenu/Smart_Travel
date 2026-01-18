@@ -7,6 +7,7 @@ from django.db.models import Case, When, Value, IntegerField, Q
 from django.conf import settings
 from django.core.mail import send_mail
 import random
+from datetime import date
 
 from .forms import (
     UserRegistrationForm, UserLoginForm, TripForm,
@@ -154,8 +155,11 @@ def trip_delete(request, pk):
     return render(request, 'trip_confirm_delete.html', {'trip': trip})
 
 
+
+@login_required
 @login_required
 def trip_detail(request, pk):
+    # 1. Fetch the trip and related data
     trip = get_object_or_404(
         Trip.objects.filter(Q(user=request.user) | Q(members=request.user)).distinct(),
         pk=pk
@@ -166,6 +170,7 @@ def trip_detail(request, pk):
     face_groups = trip.face_groups.all().prefetch_related('tagged_photos__photo')
     all_photos = trip.photos.all().order_by('-uploaded_at')
 
+    # 2. Checklist Progress Logic
     checklist_items = trip.checklist.annotate(
         priority_val=Case(
             When(priority='High', then=Value(1)),
@@ -180,67 +185,139 @@ def trip_detail(request, pk):
     completed_items = checklist_items.filter(is_done=True).count()
     progress = int((completed_items / total_items) * 100) if total_items else 0
 
+    # 3. Basic Expense Data
     expenses = trip.expenses.order_by('-date')
     total_expense = sum(e.amount for e in expenses)
 
+    # --- START: MODULE 7 & 8 (REPORTS & FUTURE PREDICTION) ---
+    category_totals = {}
+    for exp in expenses:
+        cat = exp.category if exp.category else "Other"
+        category_totals[cat] = category_totals.get(cat, 0) + exp.amount
+    
+    report_labels = list(category_totals.keys())
+    report_data = [float(amount) for amount in category_totals.values()]
+
+    # Future Prediction Calculation
+    today = date.today()
+    total_trip_days = (trip.end_date - trip.start_date).days + 1
+    
+    # કેટલા દિવસો વીતી ગયા અને કેટલા બાકી છે તેની ગણતરી
+    if today < trip.start_date:
+        days_passed = 0
+        days_remaining = total_trip_days
+    elif today > trip.end_date:
+        days_passed = total_trip_days
+        days_remaining = 0
+    else:
+        days_passed = (today - trip.start_date).days + 1
+        days_remaining = total_trip_days - days_passed
+
+    daily_avg = 0
+    projected_total = 0
+    safe_daily_limit = 0
+    budget_status = "No Budget Set"
+
+    # Daily Spending Rate
+    if days_passed > 0:
+        daily_avg = total_expense / days_passed
+        projected_total = daily_avg * total_trip_days
+    
+    # Budget Analysis
+    if trip.budget > 0:
+        remaining_budget = trip.budget - total_expense
+        if days_remaining > 0:
+            safe_daily_limit = remaining_budget / days_remaining
+        
+        if projected_total > trip.budget:
+            budget_status = "Likely to Exceed Budget"
+        else:
+            budget_status = "On Track"
+    # --- END: MODULE 7 & 8 ---
+
+    # --- START: EXPENSE SPLITTER LOGIC (Module 6) ---
+    num_members = members.count()
+    share_per_person = total_expense / num_members if num_members > 0 else 0
+    
+    member_balances = []
+    debtors = []   
+    creditors = [] 
+
+    for m in members:
+        amount_paid_by_m = sum(e.amount for e in expenses if e.paid_by == m)
+        balance = amount_paid_by_m - share_per_person
+        
+        member_balances.append({
+            'member': m,
+            'paid': amount_paid_by_m,
+            'balance': balance,
+            'abs_balance': abs(balance) 
+        })
+
+        if balance < -0.01: 
+            debtors.append({'name': m.name, 'amount': abs(balance)})
+        elif balance > 0.01: 
+            creditors.append({'name': m.name, 'amount': balance})
+
+    settlements = []
+    d_idx, c_idx = 0, 0
+    temp_debtors = [dict(d) for d in debtors]
+    temp_creditors = [dict(c) for c in creditors]
+
+    while d_idx < len(temp_debtors) and c_idx < len(temp_creditors):
+        d = temp_debtors[d_idx]
+        c = temp_creditors[c_idx]
+        settle_amount = min(d['amount'], c['amount'])
+        if settle_amount > 0.01:
+            settlements.append({
+                'from': d['name'],
+                'to': c['name'],
+                'amount': settle_amount
+            })
+        d['amount'] -= settle_amount
+        c['amount'] -= settle_amount
+        if d['amount'] <= 0: d_idx += 1
+        if c['amount'] <= 0: c_idx += 1
+    # --- END: EXPENSE SPLITTER LOGIC ---
+
+    # 4. Form Initializations
     form = ItineraryForm()
     checklist_form = ChecklistForm()
     member_form = GroupMemberForm()
     expense_form = ExpenseForm()
     expense_form.fields['paid_by'].queryset = GroupMember.objects.filter(trip=trip)
 
+    # 5. Handle POST requests
     if request.method == 'POST':
-
         if 'add_member' in request.POST:
             member_form = GroupMemberForm(request.POST)
             if member_form.is_valid():
                 name = member_form.cleaned_data['name']
                 contact = member_form.cleaned_data['contact']
-
                 if GroupMember.objects.filter(trip=trip, contact=contact).exists():
                     messages.error(request, "Member already added.")
                     return redirect('trip_detail', pk=pk)
-
                 code = str(random.randint(100000, 999999))
-                request.session['pending_member'] = {
-                    'name': name, 'contact': contact, 'trip_id': trip.pk, 'code': code
-                }
-
+                request.session['pending_member'] = {'name': name, 'contact': contact, 'trip_id': trip.pk, 'code': code}
                 try:
-                    send_mail(
-                        "Trip Verification Code",
-                        f"Your verification code is {code}",
-                        settings.EMAIL_HOST_USER,
-                        [contact]
-                    )
+                    send_mail("Trip Verification Code", f"Your verification code is {code}", settings.EMAIL_HOST_USER, [contact])
                     messages.success(request, f"Code sent to {contact}")
                 except Exception:
-                    if settings.DEBUG:
-                        messages.warning(request, f"DEBUG CODE: {code}")
-
+                    if settings.DEBUG: messages.warning(request, f"DEBUG CODE: {code}")
                 return redirect('trip_detail', pk=pk)
 
         elif 'verify_code' in request.POST:
             entered = request.POST.get('code')
             pending = request.session.get('pending_member')
-
             if pending and entered == pending['code']:
-                member = GroupMember.objects.create(
-                    trip=trip,
-                    name=pending['name'],
-                    contact=pending['contact']
-                )
-
+                member = GroupMember.objects.create(trip=trip, name=pending['name'], contact=pending['contact'])
                 try:
                     user = CustomUser.objects.get(email__iexact=pending['contact'])
                     trip.members.add(user)
-                except CustomUser.DoesNotExist:
-                    pass
-
+                except CustomUser.DoesNotExist: pass
                 del request.session['pending_member']
             else:
                 messages.error(request, "Invalid verification code.")
-
             return redirect('trip_detail', pk=pk)
 
         elif 'add_checklist_item' in request.POST:
@@ -248,9 +325,7 @@ def trip_detail(request, pk):
             instance = get_object_or_404(ChecklistItem, pk=item_id, trip=trip) if item_id else None
             checklist_form = ChecklistForm(request.POST, instance=instance)
             if checklist_form.is_valid():
-                item = checklist_form.save(commit=False)
-                item.trip = trip
-                item.save()
+                item = checklist_form.save(commit=False); item.trip = trip; item.save()
             return redirect('trip_detail', pk=pk)
 
         elif 'stop_id' in request.POST or 'location' in request.POST:
@@ -258,9 +333,7 @@ def trip_detail(request, pk):
             instance = get_object_or_404(TripItinerary, pk=stop_id, trip=trip) if stop_id else None
             form = ItineraryForm(request.POST, instance=instance)
             if form.is_valid():
-                stop = form.save(commit=False)
-                stop.trip = trip
-                stop.save()
+                stop = form.save(commit=False); stop.trip = trip; stop.save()
             return redirect('trip_detail', pk=pk)
 
         elif 'add_expense' in request.POST:
@@ -268,14 +341,13 @@ def trip_detail(request, pk):
             instance = get_object_or_404(Expense, pk=expense_id, trip=trip) if expense_id else None
             expense_form = ExpenseForm(request.POST, instance=instance)
             if expense_form.is_valid():
-                expense = expense_form.save(commit=False)
-                expense.trip = trip
-                expense.save()
+                expense = expense_form.save(commit=False); expense.trip = trip; expense.save()
             return redirect('trip_detail', pk=pk)
 
-    # NEW: Fetch active merge suggestions
+    # 6. Fetch active merge suggestions
     suggestions = trip.merge_suggestions.filter(is_active=True)
 
+    # 7. Final Context Rendering
     return render(request, 'trip_detail.html', {
         'trip': trip,
         'stops': stops,
@@ -288,12 +360,25 @@ def trip_detail(request, pk):
         'expenses': expenses,
         'expense_form': expense_form,
         'total_expense': total_expense,
+        # Reports & Prediction Context:
+        'category_totals': category_totals,
+        'report_labels': report_labels,
+        'report_data': report_data,
+        'daily_avg': daily_avg,
+        'projected_total': projected_total, 
+        'safe_daily_limit': safe_daily_limit,
+        'budget_status': budget_status,
+        'days_remaining': days_remaining,
+        # Splitter Context:
+        'share_per_person': share_per_person,
+        'member_balances': member_balances,
+        'settlements': settlements,
+        # Photos & Suggestions
         'face_groups': face_groups,
         'all_photos': all_photos,
-        'suggestions': suggestions, # Added suggestions to context
+        'suggestions': suggestions,
     })
-
-
+    
 @login_required
 def upload_trip_photos(request, pk):
     trip = get_object_or_404(
@@ -445,3 +530,4 @@ def manage_face_suggestion(request, suggestion_id, action):
         messages.info(request, "Suggestion dismissed.")
         
     return redirect('trip_detail', pk=trip.pk)
+

@@ -9,6 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard-design.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- General Layout --- */
         .trip-header-card {
@@ -641,6 +642,12 @@
                 <button class="tab-btn" onclick="openTab('photos', this)">
                     <i class="fas fa-camera" style="margin-right: 5px;"></i> Photos
                 </button>
+                <button class="tab-btn" onclick="openTab('splitter', this)">
+                    <i class="fas fa-calculator" style="margin-right: 5px;"></i> Splitter
+                </button>
+                <button class="tab-btn" onclick="openTab('reports', this)">
+                    <i class="fas fa-chart-pie" style="margin-right: 5px;"></i> Reports
+                </button>
             </div>
 
             <div id="itinerary" class="tab-content active">
@@ -831,7 +838,7 @@
                                         {{ member.name|first|upper }} </div>
                                     <div>
                                         <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">
-                                            {{member.name }}</div>
+                                            {{ member.name }}</div>
                                         {% if member.contact %}
                                         <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
                                             <i class="fas fa-address-book"
@@ -954,8 +961,7 @@
                                 <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Total
                                     Expenses</h3>
                                 <span
-                                    style="font-size:18px; font-weight:700; color:var(--blue);">${{total_expense|floatformat:2
-                                    }}</span>
+                                    style="font-size:18px; font-weight:700; color:var(--blue);">${{ total_expense|floatformat:2 }}</span>
                             </div>
                         </div>
 
@@ -968,20 +974,18 @@
                                         <i class="fas fa-receipt"></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{
-                                            expense.title }}</div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{ expense.title }}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
                                             <span class="priority-badge p-low"
-                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{
-                                                expense.category }}</span>
+                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{expense.category }}</span>
                                             &bull; Paid by {{ expense.paid_by.name|default:"Owner" }} &bull;
                                             {{expense.date }}
                                         </div>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 20px;">
-                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount
-                                        }}</span>
+                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount }}</span>
+                                        
                                     <div style="display: flex; gap: 10px;">
                                         <a href="javascript:void(0)"
                                             onclick="editExpense('{{ expense.pk }}', '{{ expense.title|escapejs }}', '{{ expense.amount }}', '{{ expense.paid_by.pk|default:'' }}', '{{ expense.category }}', '{{ expense.date|date:'Y-m-d' }}')"
@@ -1038,6 +1042,8 @@
                                 <label class="form-label">Category</label>
                                 {{ expense_form.category }}
                             </div>
+
+                           
 
                             <button type="submit" name="add_expense" id="expense-submit-btn" class="btn-add">
                                 <i class="fas fa-plus" style="margin-right: 8px;"></i> Save Expense
@@ -1223,7 +1229,178 @@
                     {% endfor %}
                 </div>
             </div>
+            <!-- TAB: SPLITTER (NEW MODULE 6) -->
+            <div id="splitter" class="tab-content">
+                <div class="itinerary-grid">
+                    <!-- Summary Section -->
+                    <div>
+                        <!-- Header Card showing Total and Share -->
+                        <div class="checklist-header-card" style="background: linear-gradient(135deg, #3B82F6, #2563EB); border: none; color: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">TOTAL TRIP EXPENSE</p>
+                                    <h2 style="margin: 5px 0 0 0; font-size: 32px; font-weight: 800;">${{ total_expense|floatformat:2 }}</h2>
+                                </div>
+                                <div style="text-align: right;">
+                                    <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">EACH MEMBER'S SHARE</p>
+                                    <h3 style="margin: 5px 0 0 0; font-size: 24px; font-weight: 700;">${{ share_per_person|floatformat:2 }}</h3>
+                                </div>
+                            </div>
+                        </div>
 
+                        <h3 style="margin: 30px 0 15px 0; color: var(--text-main); font-weight: 700;">Individual Summary</h3>
+                        <div class="checklist-items-container">
+                            {% for item in member_balances %}
+                            <div class="checklist-item">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 40px; height: 40px; background: var(--hover-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: 700;">
+                                        {{ item.member.name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; color: var(--text-main);">{{ item.member.name }}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">Paid: ${{ item.paid|floatformat:2 }}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    {% if item.balance > 0.01 %}
+                                        <span style="color: #10B981; font-weight: 700; font-size: 14px;">Gets back: ${{ item.abs_balance|floatformat:2 }}</span>
+                                    {% elif item.balance < -0.01 %}
+                                        <span style="color: #EF4444; font-weight: 700; font-size: 14px;">Owes: ${{ item.abs_balance|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-weight: 600; font-size: 14px;">Settled</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No members added yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Settlements Calculation Section -->
+                    <div class="add-card" style="border-top: 4px solid var(--blue); height: fit-content;">
+                        <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-hand-holding-usd" style="color: var(--blue);"></i> Suggested Settlements
+                        </h4>
+                        
+                        {% if settlements %}
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                                Minimum transactions to settle all debts:
+                            </p>
+                            {% for s in settlements %}
+                            <div style="background: var(--input-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                                <div style="font-size: 13px;">
+                                    <strong style="color: #EF4444;">{{ s.from }}</strong> 
+                                    <i class="fas fa-long-arrow-alt-right" style="margin: 0 8px; color: var(--text-muted);"></i>
+                                    <strong style="color: #10B981;">{{ s.to }}</strong>
+                                </div>
+                                <div style="font-weight: 800; color: var(--text-main); font-size: 15px;">${{ s.amount|floatformat:2 }}</div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
+                                <i class="fas fa-check-circle" style="font-size: 40px; color: #10B981; margin-bottom: 15px; opacity: 0.5;"></i>
+                                <p style="font-weight: 600;">Perfectly Settled!</p>
+                                <p style="font-size: 12px;">No pending payments to show.</p>
+                            </div>
+                        {% endif %}
+
+                        <div style="margin-top: 25px; padding: 12px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.5; border: 1px dashed var(--border-color);">
+                            <i class="fas fa-info-circle"></i> <strong>How it works:</strong> The total expense is divided equally among all members. The app then suggests the easiest way for members to pay each other to clear the balances.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Reports ટેબ અહીં શરૂ થાય છે -->
+            <div id="reports" class="tab-content">
+                <div class="itinerary-grid">
+                    <!-- Left Side: Statistics -->
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Trip Analytics</h3>
+                        
+                        <!-- Summary Grid -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                            <div class="add-card" style="padding: 20px; border-left: 4px solid #10B981;">
+                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Checklist Completed</p>
+                                <h2 style="margin: 5px 0; color: #10B981;">{{ progress }}%</h2>
+                            </div>
+                            <div class="add-card" style="padding: 20px; border-left: 4px solid var(--blue);">
+                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Total Members</p>
+                                <h2 style="margin: 5px 0; color: var(--blue);">{{ members.count }}</h2>
+                            </div>
+                        </div>
+
+                        <!-- Expense Breakdown List -->
+                        <h4 style="margin-bottom: 15px; color: var(--text-main);">Expense by Category</h4>
+                        <div class="checklist-items-container">
+                            {% for cat, amount in category_totals.items %}
+                            <div class="checklist-item">
+                                <div style="font-weight: 600;">{{ cat }}</div>
+                                <div style="font-weight: 700; color: var(--text-main);">${{ amount|floatformat:2 }}</div>
+                            </div>
+                            {% empty %}
+                            <p style="text-align: center; padding: 20px; color: var(--text-muted);">No expenses recorded.</p>
+                            {% endfor %}
+                            <div class="checklist-item" style="background: var(--hover-bg); border-top: 2px solid var(--border-color);">
+                                <div style="font-weight: 800;">TOTAL TRIP COST</div>
+                                <div style="font-weight: 800; color: var(--blue); font-size: 18px;">${{ total_expense|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Visualization (Chart) -->
+                    <div class="add-card">
+                        <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Visual Breakdown</h4>
+                        <div style="width: 100%; max-width: 300px; margin: 0 auto;">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                    </div>
+                </div> <!-- itinerary-grid end -->
+
+                <!-- AI Prediction Card: હવે આ સાચી રીતે Reports div ની અંદર છે -->
+                <div class="add-card" style="border-top: 4px solid #F59E0B; margin-top: 25px; background: rgba(245, 158, 11, 0.03);">
+                    <h4 style="color: var(--text-main); font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-magic" style="color: #F59E0B;"></i> AI Smart Insights & Forecast
+                    </h4>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <!-- Prediction: Estimated Total -->
+                        <div style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                            <p style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Estimated Final Cost</p>
+                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">${{ projected_total|floatformat:2 }}</h3>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Based on current spending speed</p>
+                        </div>
+
+                        <!-- Prediction: Daily Avg -->
+                        <div style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                            <p style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Daily Spending</p>
+                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">${{ daily_avg|floatformat:2 }}<small>/day</small></h3>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Current average cost</p>
+                        </div>
+
+                        <!-- Prediction: Safe Limit -->
+                        <div style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                            <p style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Safe Daily Limit</p>
+                            <h3 style="margin: 0; color: #10B981; font-weight: 800;">${{ safe_daily_limit|floatformat:2 }}<small>/day</small></h3>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Limit to stay within budget</p>
+                        </div>
+                    </div>
+
+                    <!-- Budget Alert Banner -->
+                    <div style="margin-top: 20px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 15px; 
+                        {% if budget_status == 'On Track' %} background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; color: #10B981;
+                        {% elif budget_status == 'Likely to Exceed Budget' %} background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; color: #EF4444;
+                        {% else %} background: var(--hover-bg); border: 1px solid var(--border-color); color: var(--text-secondary); {% endif %}">
+                        <i class="fas {% if budget_status == 'On Track' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}" style="font-size: 20px;"></i>
+                        <div>
+                            <div style="font-weight: 700; font-size: 14px;">Budget Status: {{ budget_status }}</div>
+                            <div style="font-size: 12px; opacity: 0.8;">
+                                {% if days_remaining > 0 %} There are {{ days_remaining }} days left in this trip. {% else %} The trip is completed. {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- Reports ટેબ અહીં પૂરી થાય છે (આ div ખૂબ મહત્વનું છે) -->
         </div>
     </div>
 
@@ -1474,6 +1651,126 @@
             document.getElementById('renamePersonBox').style.display = 'none';
             filterByPerson(null);
         }
+        function openTab(tabName, btnElement) {
+        var contents = document.getElementsByClassName("tab-content");
+        for (var i = 0; i < contents.length; i++) {
+            contents[i].classList.remove("active");
+        }
+        var buttons = document.getElementsByClassName("tab-btn");
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.remove("active");
+        }
+        
+        const targetTab = document.getElementById(tabName);
+        if (targetTab) {
+            targetTab.classList.add("active");
+        }
+
+        if (btnElement) {
+            btnElement.classList.add("active");
+        } else {
+            const btn = document.querySelector(`button[onclick*="openTab('${tabName}'"]`);
+            if (btn) btn.classList.add("active");
+        }
+        
+        localStorage.setItem('activeTab', tabName);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const savedTab = localStorage.getItem('activeTab');
+        if (savedTab && document.getElementById(savedTab)) {
+            openTab(savedTab, null);
+        }
+
+        // 2. theme toggle (Dark/Light Mode)
+        const themeToggle = document.getElementById('themeToggle');
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            });
+        }
+
+        // 3. Sidebar toggle (Mobile Menu)
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        if (menuToggle && sidebar) {
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+        }
+    });
+    // --- CHART.JS FOR EXPENSE BREAKDOWN ---
+    // Chart.js logic
+    document.addEventListener("DOMContentLoaded", function() 
+    {
+        const ctx = document.getElementById('expenseChart');
+        if (!ctx) return; 
+
+        
+        const reportLabels = {{ report_labels|safe }};
+        const reportData = {{ report_data|safe }};
+
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: reportLabels,
+                datasets: [{
+                    data: reportData,
+                    backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { 
+                            color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#fff' 
+                        } 
+                    }
+                }
+            }
+        });
+    });
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctxElement = document.getElementById('expenseChart');
+        if (ctxElement) {
+            const reportLabels = {{ report_labels|safe }};
+            const reportData = {{ report_data|safe }};
+            if (reportLabels.length > 0) {
+                new Chart(ctxElement.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: reportLabels,
+                        datasets: [{
+                            data: reportData,
+                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'bottom', 
+                                labels: { 
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#fff' 
+                                } 
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+
     </script>
 </body>
 

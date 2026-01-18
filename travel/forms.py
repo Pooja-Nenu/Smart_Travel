@@ -87,16 +87,14 @@ class UserLoginForm(forms.Form):
 class TripForm(forms.ModelForm):
     class Meta:
         model = Trip
-        fields = ['name', 'destination', 'start_date', 'end_date', 'description']
+        fields = ['name', 'destination', 'start_date', 'end_date', 'description', 'budget'] # budget field added
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Summer Vacation'}),
-            
-            # MAKE SURE THIS IS TextInput (Not Select)
             'destination': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_destination', 'placeholder': 'Start typing a city...', 'autocomplete': 'off'}),
-            
             'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief description...'}),
+            'budget': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '15000'}), # budget widget
         }
         
 class ItineraryForm(forms.ModelForm):

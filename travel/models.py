@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 import pickle
 
-
 class CustomUser(AbstractUser):
     country = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
@@ -13,7 +12,6 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
-
 
 class Trip(models.Model):
     # Owner of the trip
@@ -35,6 +33,9 @@ class Trip(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     description = models.TextField(blank=True, null=True)
+    
+    # બજેટ ફિલ્ડ અહીં જ રાખવું
+    budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -162,7 +163,6 @@ class TripPhoto(models.Model):
 
 
 class FaceGroup(models.Model):
-    """Represents a 'Person Folder' like Google Photos"""
     trip = models.ForeignKey(
         Trip,
         on_delete=models.CASCADE,
@@ -177,7 +177,6 @@ class FaceGroup(models.Model):
 
 
 class PhotoFaceRelation(models.Model):
-    """Links a specific photo to a person's folder"""
     photo = models.ForeignKey(
         TripPhoto,
         on_delete=models.CASCADE,
@@ -191,7 +190,6 @@ class PhotoFaceRelation(models.Model):
 
 
 class FaceMergeSuggestion(models.Model):
-    """Stores a suggestion to merge two potentially identical people"""
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='merge_suggestions')
     group_a = models.ForeignKey(FaceGroup, on_delete=models.CASCADE, related_name='suggestions_as_a')
     group_b = models.ForeignKey(FaceGroup, on_delete=models.CASCADE, related_name='suggestions_as_b')
@@ -199,7 +197,6 @@ class FaceMergeSuggestion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Prevent duplicate suggestions for the same pair
         unique_together = ('group_a', 'group_b')
 
     def __str__(self):

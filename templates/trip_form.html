@@ -188,6 +188,11 @@
                         {{ form.description }}
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">Total Budget ($)</label>
+                        {{ form.budget }} 
+                    </div>
+
                     <div style="margin-top: 30px; display: flex; gap: 15px;">
                         <button type="submit"
                             style="flex: 1; background: var(--blue); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">
@@ -197,6 +202,7 @@
                         <a href="{% url 'trip_list' %}"
                             style="padding: 14px 25px; background: var(--input-bg); color: var(--text-secondary); text-decoration: none; border-radius: 12px; font-weight: 600;">Cancel</a>
                     </div>
+
                 </form>
             </div>
         </div>
