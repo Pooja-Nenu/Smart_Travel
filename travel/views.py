@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa # PDF generation
 
+
 from .forms import (
     UserRegistrationForm, UserLoginForm, TripForm,
     ItineraryForm, ChecklistForm, GroupMemberForm, ExpenseForm
@@ -538,18 +539,18 @@ def manage_face_suggestion(request, suggestion_id, action):
 def export_trip_pdf(request, pk):
     trip = get_object_or_404(Trip, pk=pk)
     
-    # બધો જરૂરી ડેટા ભેગો કરો (જેમ trip_detail માં કર્યો હતો)
+    # Collect all the required data
     expenses = trip.expenses.all()
     members = trip.companions.all()
     stops = trip.itinerary.all()
     checklist = trip.checklist.all()
     
-    # કુલ ખર્ચ અને ભાગીદારીની ગણતરી
+    # Total expense and share calculation
     total_expense = sum(e.amount for e in expenses)
     num_members = members.count()
     share = total_expense / num_members if num_members > 0 else 0
     
-    # સેટલમેન્ટ લોજિક (ટૂંકમાં)
+    # Settlement logic (in brief)
     member_balances = []
     for m in members:
         paid = sum(e.amount for e in expenses if e.paid_by == m)
@@ -566,15 +567,15 @@ def export_trip_pdf(request, pk):
         'member_balances': member_balances,
     }
 
-    # PDF ટેમ્પ્લેટ લોડ કરો
+    # Load the PDF template
     template = get_template('trip_pdf.html')
     html = template.render(context)
     
-    # Response તૈયાર કરો
+    # Prepare the response
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Trip_Report_{trip.name}.pdf"'
     
-    # HTML ને PDF માં કન્વર્ટ કરો
+    # Convert HTML to PDF
     pisa_status = pisa.CreatePDF(html, dest=response)
     
     if pisa_status.err:
