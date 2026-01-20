@@ -3,14 +3,20 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
-from django.db.models import Case, When, Value, IntegerField, Q
+from django.db.models import Case, When, Value, IntegerField, Q, Sum
 from django.conf import settings
 from django.core.mail import send_mail
 import random
 from datetime import date
 from django.http import HttpResponse
 from django.template.loader import get_template
-from xhtml2pdf import pisa # PDF generation
+from xhtml2pdf import pisa
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg') # Use a non-interactive backend
+import io
+import base64
+
 
 
 from .forms import (
@@ -539,18 +545,43 @@ def manage_face_suggestion(request, suggestion_id, action):
 def export_trip_pdf(request, pk):
     trip = get_object_or_404(Trip, pk=pk)
     
-    # Collect all the required data
     expenses = trip.expenses.all()
     members = trip.companions.all()
     stops = trip.itinerary.all()
     checklist = trip.checklist.all()
     
-    # Total expense and share calculation
     total_expense = sum(e.amount for e in expenses)
     num_members = members.count()
     share = total_expense / num_members if num_members > 0 else 0
     
-    # Settlement logic (in brief)
+    # --- Visual Analytics Logic Start ---
+    chart_url = None
+    if expenses.exists():
+        # Expense by Category Data Preparation
+        category_data = trip.expenses.values('category').annotate(total=Sum('amount'))
+        labels = [item['category'] for item in category_data]
+        values = [float(item['total']) for item in category_data]
+
+        # Pie Chart Creation
+        plt.figure(figsize=(4, 3))
+        explode = [0.05] * len(values) 
+
+        plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=140, 
+                shadow=True, explode=explode, colors=['#10b981', '#3b82f6', '#f59e0b', '#ef4444'])        
+        plt.title('Expense by Category')
+
+        # Chart to PNG Conversion
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close() # Close the plot to free memory
+
+        graphic = base64.b64encode(image_png).decode('utf-8')
+        chart_url = f"data:image/png;base64,{graphic}"
+    # --- Visual Analytics Logic End ---
+
     member_balances = []
     for m in members:
         paid = sum(e.amount for e in expenses if e.paid_by == m)
@@ -565,17 +596,15 @@ def export_trip_pdf(request, pk):
         'checklist': checklist,
         'share': share,
         'member_balances': member_balances,
+        'chart_url': chart_url, 
     }
 
-    # Load the PDF template
     template = get_template('trip_pdf.html')
     html = template.render(context)
     
-    # Prepare the response
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Trip_Report_{trip.name}.pdf"'
     
-    # Convert HTML to PDF
     pisa_status = pisa.CreatePDF(html, dest=response)
     
     if pisa_status.err:

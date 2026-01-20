@@ -755,11 +755,11 @@
                                         {% endif %}
                                     </a>
                                     <div>
-                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{
-                                            item.item_name }}</span>
+                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
+                                            
                                         <span class="priority-badge p-{{ item.priority|lower }}"
-                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{
-                                            item.priority }} Priority</span>
+                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{ item.priority }} Priority</span>
+                                            
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 15px;">
@@ -1118,18 +1118,24 @@
                     {% for group in face_groups %}
                     <div class="person-item" data-group-id="{{ group.id }}" data-name="{{ group.name }}"
                         onclick="filterByPerson({{ group.id }}, this)">
+                        
                         {% if group.thumbnail %}
-                        <img src="{{ group.thumbnail.url }}" class="person-thumb" alt="{{ group.name }}">
+                            <img src="{{ group.thumbnail.url }}" class="person-thumb" alt="{{ group.name }}">
                         {% elif group.tagged_photos.exists %}
-                        <img src="{{ group.tagged_photos.first.photo.image.url }}" class="person-thumb"
-                            alt="{{ group.name }}">
+                            <img src="{{ group.tagged_photos.first.photo.image.url }}" class="person-thumb" alt="{{ group.name }}">
                         {% else %}
-                        <div class="person-thumb" style="display:flex; align-items:center; justify-content:center;">
-                            <i class="fas fa-user" style="color:var(--text-muted); font-size:24px;"></i>
-                        </div>
+                            <div class="person-thumb" style="display:flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-user" style="color:var(--text-muted); font-size:24px;"></i>
+                            </div>
                         {% endif %}
-                        <span class="person-name">{% if group.name == "Unknown Person" %}Unknown{% else %}{{ group.name
-                            }}{% endif %}</span>
+
+                        <span class="person-name">
+                            {% if group.name == "Unknown Person" %}
+                                Unknown
+                            {% else %}
+                                {{ group.name }}
+                            {% endif %}
+                        </span>
                     </div>
                     {% endfor %}
                 </div>
