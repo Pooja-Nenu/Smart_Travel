@@ -11,3 +11,4 @@ media/
 
 # Environment variables
 .env
+db.sqlite3
