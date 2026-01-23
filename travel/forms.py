@@ -114,10 +114,12 @@ class ItineraryForm(forms.ModelForm):
 class ChecklistForm(forms.ModelForm):
     class Meta:
         model = ChecklistItem
-        fields = ['item_name', 'priority']
+        fields = ['item_name', 'priority', 'stop', 'is_personal']
         widgets = {
             'item_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Passport, Charger...'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
+            'stop': forms.Select(attrs={'class': 'form-select'}),
+            'is_personal': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         
 class GroupMemberForm(forms.ModelForm):
@@ -132,11 +134,12 @@ class GroupMemberForm(forms.ModelForm):
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ['title', 'amount', 'paid_by', 'category', 'date']
+        fields = ['title', 'amount', 'paid_by', 'category', 'date', 'stop']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Dinner at Beach'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00'}),
             'paid_by': forms.Select(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'stop': forms.Select(attrs={'class': 'form-control'}),
         }

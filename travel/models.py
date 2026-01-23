@@ -83,8 +83,23 @@ class ChecklistItem(models.Model):
         on_delete=models.CASCADE,
         related_name='checklist'
     )
+    stop = models.ForeignKey(
+        TripItinerary,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stop_checklist'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='created_checklist_items'
+    )
     item_name = models.CharField(max_length=200)
     is_done = models.BooleanField(default=False)
+    is_personal = models.BooleanField(default=False)
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_CHOICES,
@@ -93,7 +108,7 @@ class ChecklistItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.item_name} ({self.priority})"
+        return f"{self.item_name} ({self.priority}) - {'Personal' if self.is_personal else 'Group'}"
 
 
 class GroupMember(models.Model):
@@ -127,6 +142,13 @@ class Expense(models.Model):
         Trip,
         on_delete=models.CASCADE,
         related_name='expenses'
+    )
+    stop = models.ForeignKey(
+        TripItinerary,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stop_expenses'
     )
     title = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=10, decimal_places=2)

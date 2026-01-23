@@ -176,12 +176,20 @@ def trip_detail(request, pk):
     )
 
     stops = trip.itinerary.all()
+    
+    # Ensure owner is also a member for expense tracking
+    GroupMember.objects.get_or_create(
+        trip=trip, 
+        contact=trip.user.email,
+        defaults={'name': f"{trip.user.first_name} (Owner)" if trip.user.first_name else f"{trip.user.username} (Owner)"}
+    )
+    
     members = trip.companions.all()
     face_groups = trip.face_groups.all().prefetch_related('tagged_photos__photo')
     all_photos = trip.photos.all().order_by('-uploaded_at')
 
     # 2. Checklist Progress Logic
-    checklist_items = trip.checklist.annotate(
+    group_items = trip.checklist.filter(is_personal=False).annotate(
         priority_val=Case(
             When(priority='High', then=Value(1)),
             When(priority='Medium', then=Value(2)),
@@ -191,8 +199,19 @@ def trip_detail(request, pk):
         )
     ).order_by('priority_val', 'is_done')
 
-    total_items = checklist_items.count()
-    completed_items = checklist_items.filter(is_done=True).count()
+    personal_items = trip.checklist.filter(is_personal=True, user=request.user).annotate(
+        priority_val=Case(
+            When(priority='High', then=Value(1)),
+            When(priority='Medium', then=Value(2)),
+            When(priority='Low', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    ).order_by('priority_val', 'is_done')
+
+    # For progress, usually we count group items or all visible items. Let's count group items for trip progress.
+    total_items = group_items.count()
+    completed_items = group_items.filter(is_done=True).count()
     progress = int((completed_items / total_items) * 100) if total_items else 0
 
     # 3. Basic Expense Data
@@ -293,9 +312,12 @@ def trip_detail(request, pk):
     # 4. Form Initializations
     form = ItineraryForm()
     checklist_form = ChecklistForm()
+    checklist_form.fields['stop'].queryset = TripItinerary.objects.filter(trip=trip)
+    
     member_form = GroupMemberForm()
     expense_form = ExpenseForm()
     expense_form.fields['paid_by'].queryset = GroupMember.objects.filter(trip=trip)
+    expense_form.fields['stop'].queryset = TripItinerary.objects.filter(trip=trip)
 
     # 5. Handle POST requests
     if request.method == 'POST':
@@ -335,10 +357,19 @@ def trip_detail(request, pk):
             instance = get_object_or_404(ChecklistItem, pk=item_id, trip=trip) if item_id else None
             checklist_form = ChecklistForm(request.POST, instance=instance)
             if checklist_form.is_valid():
-                item = checklist_form.save(commit=False); item.trip = trip; item.save()
+                item = checklist_form.save(commit=False)
+                item.trip = trip
+                if not instance:
+                    item.user = request.user
+                item.save()
             return redirect('trip_detail', pk=pk)
 
         elif 'stop_id' in request.POST or 'location' in request.POST:
+            # 1. Add stop only Trip Owner
+            if trip.user != request.user:
+                messages.error(request, "Only the trip owner can manage itinerary stops.")
+                return redirect('trip_detail', pk=pk)
+                
             stop_id = request.POST.get('stop_id')
             instance = get_object_or_404(TripItinerary, pk=stop_id, trip=trip) if stop_id else None
             form = ItineraryForm(request.POST, instance=instance)
@@ -363,7 +394,8 @@ def trip_detail(request, pk):
         'stops': stops,
         'members': members,
         'form': form,
-        'checklist_items': checklist_items,
+        'group_items': group_items,
+        'personal_items': personal_items,
         'checklist_form': checklist_form,
         'member_form': member_form,
         'progress': progress,

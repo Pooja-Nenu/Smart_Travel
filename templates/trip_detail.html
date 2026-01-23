@@ -622,7 +622,8 @@
                     <a href="{% url 'trip_update' trip.pk %}" class="action-btn btn-edit" title="Edit Trip">
                         <i class="fas fa-pen"></i>
                     </a>
-                    <a href="{% url 'export_trip_pdf' trip.pk %}" class="action-btn" style="background: rgba(16, 185, 129, 0.1); color: #10B981;" title="Download PDF Report">
+                    <a href="{% url 'export_trip_pdf' trip.pk %}" class="action-btn"
+                        style="background: rgba(16, 185, 129, 0.1); color: #10B981;" title="Download PDF Report">
                         <i class="fas fa-file-pdf"></i>
                     </a>
                     <a href="{% url 'trip_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Trips</a>
@@ -696,6 +697,7 @@
                         {% endif %}
                     </div>
 
+                    {% if trip.user == request.user %}
                     <div class="add-card">
                         <h4 id="form-title" style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Add
                             New Stop</h4>
@@ -724,6 +726,7 @@
                                 onclick="resetForm()">Cancel Edit</button>
                         </form>
                     </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -731,7 +734,8 @@
                 <div class="itinerary-grid">
                     <div>
                         <div class="checklist-header-card">
-                            <div class="checklist-header" style="margin-bottom: 15px;">
+                            <div class="checklist-header"
+                                style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                                 <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Packing
                                     Status</h3>
                                 <span style="font-size:14px; font-weight:600; color:var(--blue);">{{ progress }}%
@@ -740,48 +744,117 @@
                             <div class="progress-container">
                                 <div class="progress-bar" style="width: {{ progress }}%;"></div>
                             </div>
+
+                            <!-- Nested Tabs for Group vs Personal -->
+                            <div class="tabs-container"
+                                style="margin-top: 25px; margin-bottom: 0; border-bottom: none;">
+                                <button class="tab-btn active" id="btn-group-items"
+                                    onclick="openChecklistTab('group-items', this)"
+                                    style="padding: 8px 15px; font-size: 13px;">
+                                    <i class="fas fa-users" style="margin-right: 5px;"></i> Group Items
+                                </button>
+                                <button class="tab-btn" id="btn-personal-items"
+                                    onclick="openChecklistTab('personal-items', this)"
+                                    style="padding: 8px 15px; font-size: 13px;">
+                                    <i class="fas fa-user-lock" style="margin-right: 5px;"></i> Personal Items
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="checklist-items-container">
-                            {% for item in checklist_items %}
-                            <div class="checklist-item {% if item.is_done %}done{% endif %}">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <a href="{% url 'checklist_toggle' item.pk %}"
-                                        style="font-size: 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center;">
-                                        {% if item.is_done %}
-                                        <i class="fas fa-check-square" style="color: #10B981;"></i>
-                                        {% else %}
-                                        <i class="far fa-square"></i>
-                                        {% endif %}
-                                    </a>
-                                    <div>
-                                        <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
-                                            
-                                        <span class="priority-badge p-{{ item.priority|lower }}"
-                                            style="margin-left: 0; margin-top: 4px; display: inline-block;">{{ item.priority }} Priority</span>
-                                            
+                        <div id="group-items" class="checklist-tab-content active">
+                            <div class="checklist-items-container">
+                                {% for item in group_items %}
+                                <div class="checklist-item {% if item.is_done %}done{% endif %}">
+                                    <div style="display: flex; align-items: center; gap: 15px;">
+                                        <a href="{% url 'checklist_toggle' item.pk %}"
+                                            style="font-size: 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center;">
+                                            {% if item.is_done %}
+                                            <i class="fas fa-check-square" style="color: #10B981;"></i>
+                                            {% else %}
+                                            <i class="far fa-square"></i>
+                                            {% endif %}
+                                        </a>
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
+                                            <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                                                <span class="priority-badge p-{{ item.priority|lower }}">{{ item.priority }}</span>
+                                                {% if item.stop %}
+                                                <span class="priority-badge p-low"
+                                                    style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
+                                                    <i class="fas fa-map-marker-alt"></i> {{ item.stop.location }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 15px;">
+                                        <a href="javascript:void(0)"
+                                            onclick="editChecklistItem('{{ item.pk }}', '{{ item.item_name|escapejs }}', '{{ item.priority }}', '{{ item.stop.pk|default:'' }}', '{{ item.is_personal|yesno:'true,false' }}')"
+                                            style="color: var(--blue); opacity: 0.6; transition: 0.2s;"
+                                            title="Edit Item">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="{% url 'checklist_delete' item.pk %}"
+                                            onclick="return confirm('Delete this item?')"
+                                            style="color: #EF4444; opacity: 0.6; transition: 0.2s;" title="Delete Item">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                     </div>
                                 </div>
-                                <div style="display: flex; gap: 15px;">
-                                    <a href="javascript:void(0)"
-                                        onclick="editChecklistItem('{{ item.pk }}', '{{ item.item_name|escapejs }}', '{{ item.priority }}')"
-                                        style="color: var(--blue); opacity: 0.6; transition: 0.2s;" title="Edit Item">
-                                        <i class="fas fa-pen"></i>
-                                    </a>
-                                    <a href="{% url 'checklist_delete' item.pk %}"
-                                        onclick="return confirm('Delete this item?')"
-                                        style="color: #EF4444; opacity: 0.6; transition: 0.2s;" title="Delete Item">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                {% empty %}
+                                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                    <p style="font-size: 14px;">No group items added.</p>
                                 </div>
+                                {% endfor %}
                             </div>
-                            {% empty %}
-                            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                <i class="fas fa-suitcase-rolling"
-                                    style="font-size: 30px; margin-bottom: 15px; opacity: 0.3;"></i>
-                                <p style="font-size: 14px;">Your bag is empty.</p>
+                        </div>
+
+                        <div id="personal-items" class="checklist-tab-content" style="display: none;">
+                            <div class="checklist-items-container">
+                                {% for item in personal_items %}
+                                <div class="checklist-item {% if item.is_done %}done{% endif %}">
+                                    <div style="display: flex; align-items: center; gap: 15px;">
+                                        <a href="{% url 'checklist_toggle' item.pk %}"
+                                            style="font-size: 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center;">
+                                            {% if item.is_done %}
+                                            <i class="fas fa-check-square" style="color: #10B981;"></i>
+                                            {% else %}
+                                            <i class="far fa-square"></i>
+                                            {% endif %}
+                                        </a>
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
+                                            <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                                                <span class="priority-badge p-{{ item.priority|lower }}">{{ item.priority }}</span>
+                                                {% if item.stop %}
+                                                <span class="priority-badge p-low"
+                                                    style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
+                                                    <i class="fas fa-map-marker-alt"></i> {{ item.stop.location }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 15px;">
+                                        <a href="javascript:void(0)"
+                                            onclick="editChecklistItem('{{ item.pk }}', '{{ item.item_name|escapejs }}', '{{ item.priority }}', '{{ item.stop.pk|default:'' }}', '{{ item.is_personal|yesno:'true,false' }}')"
+                                            style="color: var(--blue); opacity: 0.6; transition: 0.2s;"
+                                            title="Edit Item">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="{% url 'checklist_delete' item.pk %}"
+                                            onclick="return confirm('Delete this item?')"
+                                            style="color: #EF4444; opacity: 0.6; transition: 0.2s;" title="Delete Item">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                    <p style="font-size: 14px;">Your personal packing list is empty.</p>
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
                         </div>
                     </div>
 
@@ -800,11 +873,18 @@
 
                             <div class="form-group">
                                 <label class="form-label">Priority Level</label>
-                                <select name="priority" id="id_priority" class="form-control" style="cursor: pointer;">
-                                    <option value="High">High (Must Have)</option>
-                                    <option value="Medium" selected>Medium</option>
-                                    <option value="Low">Low (Optional)</option>
-                                </select>
+                                {{ checklist_form.priority }}
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Associated Stop (Optional)</label>
+                                {{ checklist_form.stop }}
+                            </div>
+
+                            <div class="form-group"
+                                style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+                                {{ checklist_form.is_personal }}
+                                <label class="form-label" style="margin-bottom: 0;">Mark as Personal Item</label>
                             </div>
 
                             <button type="submit" name="add_checklist_item" id="checklist-submit-btn" class="btn-add">
@@ -963,8 +1043,8 @@
                             <div class="checklist-header" style="margin-bottom: 15px;">
                                 <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Total
                                     Expenses</h3>
-                                <span
-                                    style="font-size:18px; font-weight:700; color:var(--blue);">${{ total_expense|floatformat:2 }}</span>
+                                <span style="font-size:18px; font-weight:700; color:var(--blue);">${{
+                                    total_expense|floatformat:2 }}</span>
                             </div>
                         </div>
 
@@ -977,21 +1057,27 @@
                                         <i class="fas fa-receipt"></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{ expense.title }}</div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{
+                                            expense.title }}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
                                             <span class="priority-badge p-low"
-                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{expense.category }}</span>
-                                            &bull; Paid by {{ expense.paid_by.name|default:"Owner" }} &bull;
-                                            {{expense.date }}
+                                                style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{expense.category
+                                                }}</span>
+                                            &bull; Paid by {{ expense.paid_by.name|default:"Owner" }}
+                                            {% if expense.stop %}
+                                            &bull; <i class="fas fa-map-marker-alt"></i> {{ expense.stop.location }}
+                                            {% endif %}
+                                            &bull; {{expense.date }}
                                         </div>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 20px;">
-                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount }}</span>
-                                        
+                                    <span style="font-weight: 700; color: var(--text-main);">${{ expense.amount
+                                        }}</span>
+
                                     <div style="display: flex; gap: 10px;">
                                         <a href="javascript:void(0)"
-                                            onclick="editExpense('{{ expense.pk }}', '{{ expense.title|escapejs }}', '{{ expense.amount }}', '{{ expense.paid_by.pk|default:'' }}', '{{ expense.category }}', '{{ expense.date|date:'Y-m-d' }}')"
+                                            onclick="editExpense('{{ expense.pk }}', '{{ expense.title|escapejs }}', '{{ expense.amount }}', '{{ expense.paid_by.pk|default:'' }}', '{{ expense.category }}', '{{ expense.date|date:'Y-m-d' }}', '{{ expense.stop.pk|default:'' }}')"
                                             style="color: var(--blue); opacity: 0.6;" title="Edit">
                                             <i class="fas fa-pen"></i>
                                         </a>
@@ -1046,7 +1132,12 @@
                                 {{ expense_form.category }}
                             </div>
 
-                           
+                            <div class="form-group">
+                                <label class="form-label">Associated Stop (Optional)</label>
+                                {{ expense_form.stop }}
+                            </div>
+
+
 
                             <button type="submit" name="add_expense" id="expense-submit-btn" class="btn-add">
                                 <i class="fas fa-plus" style="margin-right: 8px;"></i> Save Expense
@@ -1117,23 +1208,24 @@
                 <div class="people-carousel">
                     {% for group in face_groups %}
                     <div class="person-item" data-group-id="{{ group.id }}" data-name="{{ group.name }}"
-                        onclick="filterByPerson({{ group.id }}, this)">
-                        
+                        onclick="filterByPerson('{{ group.id }}', this)">
+
                         {% if group.thumbnail %}
-                            <img src="{{ group.thumbnail.url }}" class="person-thumb" alt="{{ group.name }}">
+                        <img src="{{ group.thumbnail.url }}" class="person-thumb" alt="{{ group.name }}">
                         {% elif group.tagged_photos.exists %}
-                            <img src="{{ group.tagged_photos.first.photo.image.url }}" class="person-thumb" alt="{{ group.name }}">
+                        <img src="{{ group.tagged_photos.first.photo.image.url }}" class="person-thumb"
+                            alt="{{ group.name }}">
                         {% else %}
-                            <div class="person-thumb" style="display:flex; align-items:center; justify-content:center;">
-                                <i class="fas fa-user" style="color:var(--text-muted); font-size:24px;"></i>
-                            </div>
+                        <div class="person-thumb" style="display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-user" style="color:var(--text-muted); font-size:24px;"></i>
+                        </div>
                         {% endif %}
 
                         <span class="person-name">
                             {% if group.name == "Unknown Person" %}
-                                Unknown
+                            Unknown
                             {% else %}
-                                {{ group.name }}
+                            {{ group.name }}
                             {% endif %}
                         </span>
                     </div>
@@ -1244,78 +1336,99 @@
                     <!-- Summary Section -->
                     <div>
                         <!-- Header Card showing Total and Share -->
-                        <div class="checklist-header-card" style="background: linear-gradient(135deg, #3B82F6, #2563EB); border: none; color: white;">
+                        <div class="checklist-header-card"
+                            style="background: linear-gradient(135deg, #3B82F6, #2563EB); border: none; color: white;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">TOTAL TRIP EXPENSE</p>
-                                    <h2 style="margin: 5px 0 0 0; font-size: 32px; font-weight: 800;">${{ total_expense|floatformat:2 }}</h2>
+                                    <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">TOTAL TRIP
+                                        EXPENSE</p>
+                                    <h2 style="margin: 5px 0 0 0; font-size: 32px; font-weight: 800;">${{
+                                        total_expense|floatformat:2 }}</h2>
                                 </div>
                                 <div style="text-align: right;">
-                                    <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">EACH MEMBER'S SHARE</p>
-                                    <h3 style="margin: 5px 0 0 0; font-size: 24px; font-weight: 700;">${{ share_per_person|floatformat:2 }}</h3>
+                                    <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">EACH MEMBER'S
+                                        SHARE</p>
+                                    <h3 style="margin: 5px 0 0 0; font-size: 24px; font-weight: 700;">${{
+                                        share_per_person|floatformat:2 }}</h3>
                                 </div>
                             </div>
                         </div>
 
-                        <h3 style="margin: 30px 0 15px 0; color: var(--text-main); font-weight: 700;">Individual Summary</h3>
+                        <h3 style="margin: 30px 0 15px 0; color: var(--text-main); font-weight: 700;">Individual Summary
+                        </h3>
                         <div class="checklist-items-container">
                             {% for item in member_balances %}
                             <div class="checklist-item">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="width: 40px; height: 40px; background: var(--hover-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: 700;">
+                                    <div
+                                        style="width: 40px; height: 40px; background: var(--hover-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: 700;">
                                         {{ item.member.name|first|upper }}
                                     </div>
                                     <div>
-                                        <div style="font-weight: 700; color: var(--text-main);">{{ item.member.name }}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">Paid: ${{ item.paid|floatformat:2 }}</div>
+                                        <div style="font-weight: 700; color: var(--text-main);">{{ item.member.name }}
+                                        </div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">Paid: ${{
+                                            item.paid|floatformat:2 }}</div>
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
                                     {% if item.balance > 0.01 %}
-                                        <span style="color: #10B981; font-weight: 700; font-size: 14px;">Gets back: ${{ item.abs_balance|floatformat:2 }}</span>
-                                    {% elif item.balance < -0.01 %}
-                                        <span style="color: #EF4444; font-weight: 700; font-size: 14px;">Owes: ${{ item.abs_balance|floatformat:2 }}</span>
-                                    {% else %}
-                                        <span style="color: var(--text-muted); font-weight: 600; font-size: 14px;">Settled</span>
-                                    {% endif %}
+                                    <span style="color: #10B981; font-weight: 700; font-size: 14px;">Gets back: ${{
+                                        item.abs_balance|floatformat:2 }}</span>
+                                    {% elif item.balance < -0.01 %} <span
+                                        style="color: #EF4444; font-weight: 700; font-size: 14px;">Owes: ${{
+                                        item.abs_balance|floatformat:2 }}</span>
+                                        {% else %}
+                                        <span
+                                            style="color: var(--text-muted); font-weight: 600; font-size: 14px;">Settled</span>
+                                        {% endif %}
                                 </div>
                             </div>
                             {% empty %}
-                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No members added yet.</div>
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">No members added
+                                yet.</div>
                             {% endfor %}
                         </div>
                     </div>
 
                     <!-- Settlements Calculation Section -->
                     <div class="add-card" style="border-top: 4px solid var(--blue); height: fit-content;">
-                        <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                        <h4
+                            style="margin-bottom: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-hand-holding-usd" style="color: var(--blue);"></i> Suggested Settlements
                         </h4>
-                        
+
                         {% if settlements %}
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
-                                Minimum transactions to settle all debts:
-                            </p>
-                            {% for s in settlements %}
-                            <div style="background: var(--input-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-                                <div style="font-size: 13px;">
-                                    <strong style="color: #EF4444;">{{ s.from }}</strong> 
-                                    <i class="fas fa-long-arrow-alt-right" style="margin: 0 8px; color: var(--text-muted);"></i>
-                                    <strong style="color: #10B981;">{{ s.to }}</strong>
-                                </div>
-                                <div style="font-weight: 800; color: var(--text-main); font-size: 15px;">${{ s.amount|floatformat:2 }}</div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                            Minimum transactions to settle all debts:
+                        </p>
+                        {% for s in settlements %}
+                        <div
+                            style="background: var(--input-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 13px;">
+                                <strong style="color: #EF4444;">{{ s.from }}</strong>
+                                <i class="fas fa-long-arrow-alt-right"
+                                    style="margin: 0 8px; color: var(--text-muted);"></i>
+                                <strong style="color: #10B981;">{{ s.to }}</strong>
                             </div>
-                            {% endfor %}
+                            <div style="font-weight: 800; color: var(--text-main); font-size: 15px;">${{
+                                s.amount|floatformat:2 }}</div>
+                        </div>
+                        {% endfor %}
                         {% else %}
-                            <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
-                                <i class="fas fa-check-circle" style="font-size: 40px; color: #10B981; margin-bottom: 15px; opacity: 0.5;"></i>
-                                <p style="font-weight: 600;">Perfectly Settled!</p>
-                                <p style="font-size: 12px;">No pending payments to show.</p>
-                            </div>
+                        <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
+                            <i class="fas fa-check-circle"
+                                style="font-size: 40px; color: #10B981; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <p style="font-weight: 600;">Perfectly Settled!</p>
+                            <p style="font-size: 12px;">No pending payments to show.</p>
+                        </div>
                         {% endif %}
 
-                        <div style="margin-top: 25px; padding: 12px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.5; border: 1px dashed var(--border-color);">
-                            <i class="fas fa-info-circle"></i> <strong>How it works:</strong> The total expense is divided equally among all members. The app then suggests the easiest way for members to pay each other to clear the balances.
+                        <div
+                            style="margin-top: 25px; padding: 12px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.5; border: 1px dashed var(--border-color);">
+                            <i class="fas fa-info-circle"></i> <strong>How it works:</strong> The total expense is
+                            divided equally among all members. The app then suggests the easiest way for members to pay
+                            each other to clear the balances.
                         </div>
                     </div>
                 </div>
@@ -1326,11 +1439,12 @@
                     <!-- Left Side: Statistics -->
                     <div>
                         <h3 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Trip Analytics</h3>
-                        
+
                         <!-- Summary Grid -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
                             <div class="add-card" style="padding: 20px; border-left: 4px solid #10B981;">
-                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Checklist Completed</p>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Checklist Completed
+                                </p>
                                 <h2 style="margin: 5px 0; color: #10B981;">{{ progress }}%</h2>
                             </div>
                             <div class="add-card" style="padding: 20px; border-left: 4px solid var(--blue);">
@@ -1345,21 +1459,26 @@
                             {% for cat, amount in category_totals.items %}
                             <div class="checklist-item">
                                 <div style="font-weight: 600;">{{ cat }}</div>
-                                <div style="font-weight: 700; color: var(--text-main);">${{ amount|floatformat:2 }}</div>
+                                <div style="font-weight: 700; color: var(--text-main);">${{ amount|floatformat:2 }}
+                                </div>
                             </div>
                             {% empty %}
-                            <p style="text-align: center; padding: 20px; color: var(--text-muted);">No expenses recorded.</p>
+                            <p style="text-align: center; padding: 20px; color: var(--text-muted);">No expenses
+                                recorded.</p>
                             {% endfor %}
-                            <div class="checklist-item" style="background: var(--hover-bg); border-top: 2px solid var(--border-color);">
+                            <div class="checklist-item"
+                                style="background: var(--hover-bg); border-top: 2px solid var(--border-color);">
                                 <div style="font-weight: 800;">TOTAL TRIP COST</div>
-                                <div style="font-weight: 800; color: var(--blue); font-size: 18px;">${{ total_expense|floatformat:2 }}</div>
+                                <div style="font-weight: 800; color: var(--blue); font-size: 18px;">${{
+                                    total_expense|floatformat:2 }}</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Right Side: Visualization (Chart) -->
                     <div class="add-card">
-                        <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Visual Breakdown</h4>
+                        <h4 style="margin-bottom: 20px; color: var(--text-main); font-weight: 700;">Visual Breakdown
+                        </h4>
                         <div style="width: 100%; max-width: 300px; margin: 0 auto;">
                             <canvas id="expenseChart"></canvas>
                         </div>
@@ -1367,44 +1486,64 @@
                 </div> <!-- itinerary-grid end -->
 
                 <!-- AI Prediction Card:  -->
-                <div class="add-card" style="border-top: 4px solid #F59E0B; margin-top: 25px; background: rgba(245, 158, 11, 0.03);">
-                    <h4 style="color: var(--text-main); font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <div class="add-card"
+                    style="border-top: 4px solid #F59E0B; margin-top: 25px; background: rgba(245, 158, 11, 0.03);">
+                    <h4
+                        style="color: var(--text-main); font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
                         <i class="fas fa-magic" style="color: #F59E0B;"></i> AI Smart Insights & Forecast
                     </h4>
-                    
+
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                         <!-- Prediction: Estimated Total -->
-                        <div style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
-                            <p style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Estimated Final Cost</p>
-                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">${{ projected_total|floatformat:2 }}</h3>
-                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Based on current spending speed</p>
+                        <div
+                            style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                            <p
+                                style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
+                                Estimated Final Cost</p>
+                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">${{
+                                projected_total|floatformat:2 }}</h3>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Based on current
+                                spending speed</p>
                         </div>
 
                         <!-- Prediction: Daily Avg -->
-                        <div style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
-                            <p style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Daily Spending</p>
-                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">${{ daily_avg|floatformat:2 }}<small>/day</small></h3>
-                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Current average cost</p>
+                        <div
+                            style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                            <p
+                                style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
+                                Daily Spending</p>
+                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">${{
+                                daily_avg|floatformat:2 }}<small>/day</small></h3>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Current average cost
+                            </p>
                         </div>
 
                         <!-- Prediction: Safe Limit -->
-                        <div style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
-                            <p style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Safe Daily Limit</p>
-                            <h3 style="margin: 0; color: #10B981; font-weight: 800;">${{ safe_daily_limit|floatformat:2 }}<small>/day</small></h3>
-                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Limit to stay within budget</p>
+                        <div
+                            style="padding: 15px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                            <p
+                                style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
+                                Safe Daily Limit</p>
+                            <h3 style="margin: 0; color: #10B981; font-weight: 800;">${{ safe_daily_limit|floatformat:2
+                                }}<small>/day</small></h3>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Limit to stay within
+                                budget</p>
                         </div>
                     </div>
 
                     <!-- Budget Alert Banner -->
-                    <div style="margin-top: 20px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 15px; 
+                    <div
+                        style="margin-top: 20px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 15px; 
                         {% if budget_status == 'On Track' %} background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; color: #10B981;
                         {% elif budget_status == 'Likely to Exceed Budget' %} background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; color: #EF4444;
                         {% else %} background: var(--hover-bg); border: 1px solid var(--border-color); color: var(--text-secondary); {% endif %}">
-                        <i class="fas {% if budget_status == 'On Track' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}" style="font-size: 20px;"></i>
+                        <i class="fas {% if budget_status == 'On Track' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"
+                            style="font-size: 20px;"></i>
                         <div>
                             <div style="font-weight: 700; font-size: 14px;">Budget Status: {{ budget_status }}</div>
                             <div style="font-size: 12px; opacity: 0.8;">
-                                {% if days_remaining > 0 %} There are {{ days_remaining }} days left in this trip. {% else %} The trip is completed. {% endif %}
+                                {% if days_remaining > 0 %} There are {{ days_remaining }} days left in this trip. {%
+                                else %} The trip is completed. {% endif %}
                             </div>
                         </div>
                     </div>
@@ -1414,107 +1553,48 @@
     </div>
 
     <script>
-        // --- DATE RESTRICTION LOGIC ---
-        document.addEventListener('DOMContentLoaded', function () {
-            const startDate = "{{ trip.start_date|date:'Y-m-d' }}";
-            const endDate = "{{ trip.end_date|date:'Y-m-d' }}";
-
-            // Apply to all date inputs in the specific forms
-            const dateInputs = document.querySelectorAll('#stop-form input[type="date"], #expense-form input[type="date"]');
-            dateInputs.forEach(input => {
-                input.setAttribute('min', startDate);
-                input.setAttribute('max', endDate);
-            });
-        });
-
-        // --- TAB SWITCHING LOGIC ---
+        // --- UTILITY FUNCTIONS ---
         function openTab(tabName, btnElement) {
-            var contents = document.getElementsByClassName("tab-content");
-            for (var i = 0; i < contents.length; i++) {
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) {
                 contents[i].classList.remove("active");
             }
-            var buttons = document.getElementsByClassName("tab-btn");
-            for (var i = 0; i < buttons.length; i++) {
+            const buttons = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < buttons.length; i++) {
                 buttons[i].classList.remove("active");
             }
-            document.getElementById(tabName).classList.add("active");
+
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) {
+                targetTab.classList.add("active");
+            }
+
             if (btnElement) {
                 btnElement.classList.add("active");
             } else {
-                const btn = document.querySelector(`button[onclick="openTab('${tabName}', this)"]`);
+                const btn = document.querySelector(`button[onclick*="openTab('${tabName}'"]`);
                 if (btn) btn.classList.add("active");
             }
             localStorage.setItem('activeTab', tabName);
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const savedTab = localStorage.getItem('activeTab');
-            if (savedTab && document.getElementById(savedTab)) {
-                openTab(savedTab, null);
+        function openChecklistTab(tabName, btnElement) {
+            const contents = document.getElementsByClassName("checklist-tab-content");
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].style.display = "none";
+                contents[i].classList.remove("active");
             }
-        });
-
-        // --- THEME & SIDEBAR ---
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); }
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                body.classList.toggle('dark-mode');
-                localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
-            });
-        }
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar && menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
-
-        // --- LOCATION AUTOCOMPLETE ---
-        const input = document.getElementById('id_stop_location');
-        const suggestionsBox = document.getElementById('suggestions');
-        let timeout = null;
-        if (input) {
-            input.addEventListener('input', function () {
-                const query = this.value;
-                if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
-                clearTimeout(timeout);
-                timeout = setTimeout(() => { fetchLocations(query); }, 300);
-            });
-        }
-        function fetchLocations(query) {
-            fetch(`https://photon.komoot.io/api/?q=${query}&limit=5`)
-                .then(response => response.json())
-                .then(data => {
-                    suggestionsBox.innerHTML = '';
-                    const seen = new Set();
-                    if (data.features && data.features.length > 0) {
-                        suggestionsBox.style.display = 'block';
-                        data.features.forEach(feature => {
-                            const props = feature.properties;
-                            let parts = [];
-                            if (props.name) parts.push(props.name);
-                            if (props.state) parts.push(props.state);
-                            if (props.country) parts.push(props.country);
-                            const fullLocation = parts.join(", ");
-                            if (!seen.has(fullLocation)) {
-                                seen.add(fullLocation);
-                                const div = document.createElement('div');
-                                div.classList.add('suggestion-item');
-                                div.innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right:8px; color:var(--text-muted);"></i> ${fullLocation}`;
-                                div.addEventListener('click', function () {
-                                    input.value = fullLocation;
-                                    suggestionsBox.style.display = 'none';
-                                });
-                                suggestionsBox.appendChild(div);
-                            }
-                        });
-                    } else { suggestionsBox.style.display = 'none'; }
-                });
-        }
-        document.addEventListener('click', function (e) {
-            if (input && e.target !== input && e.target !== suggestionsBox) {
-                suggestionsBox.style.display = 'none';
+            const buttons = document.querySelectorAll("#checklist .tab-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
             }
-        });
+            const target = document.getElementById(tabName);
+            if (target) {
+                target.style.display = "block";
+                target.classList.add("active");
+            }
+            if (btnElement) btnElement.classList.add("active");
+        }
 
         // --- EDIT FUNCTIONS ---
         function handleEdit(btn) {
@@ -1525,6 +1605,7 @@
             const notes = btn.getAttribute('data-notes');
             editStop(pk, location, date, notes);
         }
+
         function editStop(pk, location, date, notes) {
             document.getElementById('form-title').innerText = 'Edit Stop';
             document.getElementById('stop_id').value = pk;
@@ -1535,6 +1616,7 @@
             document.getElementById('cancel-btn').style.display = 'block';
             document.getElementById('stop-form').scrollIntoView({ behavior: 'smooth' });
         }
+
         function resetForm() {
             document.getElementById('form-title').innerText = 'Add New Stop';
             document.getElementById('stop_id').value = '';
@@ -1543,15 +1625,23 @@
             document.getElementById('cancel-btn').style.display = 'none';
         }
 
-        function editChecklistItem(pk, name, priority) {
+        function editChecklistItem(pk, name, priority, stopId, isPersonal) {
             document.getElementById('checklist-form-title').innerText = 'Edit Item';
             document.getElementById('checklist-submit-btn').innerHTML = '<i class="fas fa-save" style="margin-right: 8px;"></i> Update Item';
             document.getElementById('checklist_item_id').value = pk;
             document.getElementById('id_item_name').value = name;
             document.getElementById('id_priority').value = priority;
+
+            const stopSelect = document.querySelector('#checklist-form [name="stop"]');
+            if (stopSelect) stopSelect.value = stopId || "";
+
+            const personalCheckbox = document.querySelector('#checklist-form [name="is_personal"]');
+            if (personalCheckbox) personalCheckbox.checked = (isPersonal === 'true');
+
             document.getElementById('checklist-cancel-btn').style.display = 'block';
             document.getElementById('checklist-form-card').scrollIntoView({ behavior: 'smooth' });
         }
+
         function resetChecklistForm() {
             document.getElementById('checklist-form-title').innerText = 'Add Item';
             document.getElementById('checklist-submit-btn').innerHTML = '<i class="fas fa-plus" style="margin-right: 8px;"></i> Add to List';
@@ -1569,6 +1659,7 @@
             document.getElementById('member-cancel-btn').style.display = 'block';
             document.getElementById('member-form-card').scrollIntoView({ behavior: 'smooth' });
         }
+
         function resetMemberForm() {
             document.getElementById('member-form-title').innerText = 'Add Member';
             document.getElementById('member-submit-btn').innerHTML = '<i class="fas fa-user-plus" style="margin-right: 8px;"></i> Add Member';
@@ -1577,7 +1668,7 @@
             document.getElementById('member-cancel-btn').style.display = 'none';
         }
 
-        function editExpense(pk, title, amount, paid_by, category, date) {
+        function editExpense(pk, title, amount, paid_by, category, date, stopId) {
             document.getElementById('expense-form-title').innerText = 'Edit Expense';
             document.getElementById('expense-submit-btn').innerHTML = '<i class="fas fa-save" style="margin-right: 8px;"></i> Update Expense';
             document.getElementById('expense_id').value = pk;
@@ -1589,9 +1680,13 @@
             form.querySelector('[name="category"]').value = category;
             form.querySelector('[name="date"]').value = date;
 
+            const stopSelect = form.querySelector('[name="stop"]');
+            if (stopSelect) stopSelect.value = stopId || "";
+
             document.getElementById('expense-cancel-btn').style.display = 'block';
             document.getElementById('expense-form-card').scrollIntoView({ behavior: 'smooth' });
         }
+
         function resetExpenseForm() {
             document.getElementById('expense-form-title').innerText = 'Add Expense';
             document.getElementById('expense-submit-btn').innerHTML = '<i class="fas fa-plus" style="margin-right: 8px;"></i> Save Expense';
@@ -1599,187 +1694,185 @@
             document.getElementById('expense-form').reset();
             document.getElementById('expense-cancel-btn').style.display = 'none';
         }
+
         // --- PHOTO FILTERING & RENAMING ---
         let currentGroupId = null;
 
         function filterByPerson(groupId, element) {
             const grid = document.getElementById('photoGrid');
+            if (!grid) return;
             const photos = grid.querySelectorAll('.photo-card-wrapper');
             const clearBtn = document.getElementById('clearFilter');
             const gridTitle = document.getElementById('photoGridTitle');
             const renameBox = document.getElementById('renamePersonBox');
 
-            // Remove active class from all items
             document.querySelectorAll('.person-item').forEach(item => item.classList.remove('active'));
 
             if (groupId === null || currentGroupId === groupId) {
-                // Clear filter
                 photos.forEach(p => p.style.display = 'block');
-                clearBtn.style.display = 'none';
-                gridTitle.innerText = 'All Photos';
+                if (clearBtn) clearBtn.style.display = 'none';
+                if (gridTitle) gridTitle.innerText = 'All Photos';
                 currentGroupId = null;
-                renameBox.style.display = 'none';
+                if (renameBox) renameBox.style.display = 'none';
             } else {
-                // Apply filter
                 photos.forEach(p => {
-                    const groups = JSON.parse(p.getAttribute('data-groups'));
+                    const groupsAttr = p.getAttribute('data-groups');
+                    const groups = groupsAttr ? JSON.parse(groupsAttr) : [];
                     p.style.display = groups.includes(groupId) ? 'block' : 'none';
                 });
                 if (element) element.classList.add('active');
-                clearBtn.style.display = 'block';
+                if (clearBtn) clearBtn.style.display = 'block';
 
                 const name = element.getAttribute('data-name');
-                gridTitle.innerText = `Photos of ${name}`;
+                if (gridTitle) gridTitle.innerText = `Photos of ${name}`;
                 currentGroupId = groupId;
 
-                // Show rename box
-                const actionUrl = "{% url 'rename_face_group' 0 %}".replace('0', groupId);
-                document.getElementById('renameForm').action = actionUrl;
-                document.getElementById('renameTitle').innerText = name;
-                document.getElementById('renameInput').value = name === "Unknown Person" ? "" : name;
+                if (renameBox) {
+                    const actionUrl = "{% url 'rename_face_group' 0 %}".replace('0', groupId);
+                    document.getElementById('renameForm').action = actionUrl;
+                    document.getElementById('renameTitle').innerText = name;
+                    document.getElementById('renameInput').value = name === "Unknown Person" ? "" : name;
 
-                const thumbImg = element.querySelector('img');
-                const renameThumb = document.getElementById('renameThumb');
-                const renamePlaceholder = document.getElementById('renamePlaceholder');
+                    const thumbImg = element.querySelector('img');
+                    const renameThumb = document.getElementById('renameThumb');
+                    const renamePlaceholder = document.getElementById('renamePlaceholder');
 
-                if (thumbImg) {
-                    renameThumb.src = thumbImg.src;
-                    renameThumb.style.display = 'block';
-                    renamePlaceholder.style.display = 'none';
-                } else {
-                    renameThumb.style.display = 'none';
-                    renamePlaceholder.style.display = 'flex';
+                    if (thumbImg) {
+                        renameThumb.src = thumbImg.src;
+                        renameThumb.style.display = 'block';
+                        renamePlaceholder.style.display = 'none';
+                    } else {
+                        renameThumb.style.display = 'none';
+                        renamePlaceholder.style.display = 'flex';
+                    }
+                    renameBox.style.display = 'block';
+                    renameBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
-
-                renameBox.style.display = 'block';
-                renameBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
 
         function hideRenameBox() {
-            document.getElementById('renamePersonBox').style.display = 'none';
+            const renameBox = document.getElementById('renamePersonBox');
+            if (renameBox) renameBox.style.display = 'none';
             filterByPerson(null);
         }
-        function openTab(tabName, btnElement) {
-        var contents = document.getElementsByClassName("tab-content");
-        for (var i = 0; i < contents.length; i++) {
-            contents[i].classList.remove("active");
-        }
-        var buttons = document.getElementsByClassName("tab-btn");
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.remove("active");
-        }
-        
-        const targetTab = document.getElementById(tabName);
-        if (targetTab) {
-            targetTab.classList.add("active");
-        }
 
-        if (btnElement) {
-            btnElement.classList.add("active");
-        } else {
-            const btn = document.querySelector(`button[onclick*="openTab('${tabName}'"]`);
-            if (btn) btn.classList.add("active");
-        }
-        
-        localStorage.setItem('activeTab', tabName);
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const savedTab = localStorage.getItem('activeTab');
-        if (savedTab && document.getElementById(savedTab)) {
-            openTab(savedTab, null);
-        }
-
-        // 2. theme toggle (Dark/Light Mode)
-        const themeToggle = document.getElementById('themeToggle');
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-            });
-        }
-
-        // 3. Sidebar toggle (Mobile Menu)
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        if (menuToggle && sidebar) {
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-            });
-        }
-    });
-    // --- CHART.JS FOR EXPENSE BREAKDOWN ---
-    // Chart.js logic
-    document.addEventListener("DOMContentLoaded", function() 
-    {
-        const ctx = document.getElementById('expenseChart');
-        if (!ctx) return; 
-
-        
-        const reportLabels = {{ report_labels|safe }};
-        const reportData = {{ report_data|safe }};
-
-        new Chart(ctx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: reportLabels,
-                datasets: [{
-                    data: reportData,
-                    backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { 
-                        position: 'bottom', 
-                        labels: { 
-                            color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#fff' 
-                        } 
-                    }
-                }
+        // --- DOM CONTENT LOADED ---
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Theme & Sidebar
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); }
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-mode');
+                    localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+                });
             }
-        });
-    });
-    document.addEventListener("DOMContentLoaded", function() {
-        const ctxElement = document.getElementById('expenseChart');
-        if (ctxElement) {
-            const reportLabels = {{ report_labels|safe }};
-            const reportData = {{ report_data|safe }};
-            if (reportLabels.length > 0) {
-                new Chart(ctxElement.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: reportLabels,
-                        datasets: [{
-                            data: reportData,
-                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { 
-                                position: 'bottom', 
-                                labels: { 
-                                    color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#fff' 
-                                } 
-                            }
-                        }
+
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+            }
+
+            // 2. Tab Recovery
+            const savedTab = localStorage.getItem('activeTab');
+            if (savedTab && document.getElementById(savedTab)) {
+                openTab(savedTab, null);
+            }
+
+            // 3. Date Restrictions
+            const startDate = "{{ trip.start_date|date:'Y-m-d' }}";
+            const endDate = "{{ trip.end_date|date:'Y-m-d' }}";
+            const dateInputs = document.querySelectorAll('#stop-form input[type="date"], #expense-form input[type="date"]');
+            dateInputs.forEach(input => {
+                input.setAttribute('min', startDate);
+                input.setAttribute('max', endDate);
+            });
+
+            // 4. Location Autocomplete
+            const locationInput = document.getElementById('id_stop_location');
+            const suggestionsBox = document.getElementById('suggestions');
+            let locationTimeout = null;
+
+            if (locationInput && suggestionsBox) {
+                locationInput.addEventListener('input', function () {
+                    const query = this.value;
+                    if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
+                    clearTimeout(locationTimeout);
+                    locationTimeout = setTimeout(() => {
+                        fetch(`https://photon.komoot.io/api/?q=${query}&limit=5`)
+                            .then(response => response.json())
+                            .then(data => {
+                                suggestionsBox.innerHTML = '';
+                                const seen = new Set();
+                                if (data.features && data.features.length > 0) {
+                                    suggestionsBox.style.display = 'block';
+                                    data.features.forEach(feature => {
+                                        const props = feature.properties;
+                                        let parts = [];
+                                        if (props.name) parts.push(props.name);
+                                        if (props.state) parts.push(props.state);
+                                        if (props.country) parts.push(props.country);
+                                        const fullLocation = parts.join(", ");
+                                        if (!seen.has(fullLocation)) {
+                                            seen.add(fullLocation);
+                                            const div = document.createElement('div');
+                                            div.classList.add('suggestion-item');
+                                            div.innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right:8px; color:var(--text-muted);"></i> ${fullLocation}`;
+                                            div.addEventListener('click', function () {
+                                                locationInput.value = fullLocation;
+                                                suggestionsBox.style.display = 'none';
+                                            });
+                                            suggestionsBox.appendChild(div);
+                                        }
+                                    });
+                                } else { suggestionsBox.style.display = 'none'; }
+                            });
+                    }, 300);
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (e.target !== locationInput && e.target !== suggestionsBox) {
+                        suggestionsBox.style.display = 'none';
                     }
                 });
             }
-        }
-    });
 
+            // 5. Expense Chart (Chart.js)
+            const ctx = document.getElementById('expenseChart');
+            if (ctx) {
+                const reportLabels = {{ report_labels|safe }};
+                const reportData = {{ report_data|safe }};
+
+                if (reportLabels && reportLabels.length > 0) {
+                    new Chart(ctx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: reportLabels,
+                            datasets: [{
+                                data: reportData,
+                                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#333'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        });
     </script>
 </body>
 
