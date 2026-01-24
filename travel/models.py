@@ -223,3 +223,25 @@ class FaceMergeSuggestion(models.Model):
 
     def __str__(self):
         return f"Suggest merge: {self.group_a.name} & {self.group_b.name}"
+class Settlement(models.Model):
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.CASCADE,
+        related_name='settlements'
+    )
+    payer = models.ForeignKey(
+        GroupMember,
+        on_delete=models.CASCADE,
+        related_name='payments_made'
+    )
+    payee = models.ForeignKey(
+        GroupMember,
+        on_delete=models.CASCADE,
+        related_name='payments_received'
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.payer.name} paid {self.payee.name} {self.amount}"

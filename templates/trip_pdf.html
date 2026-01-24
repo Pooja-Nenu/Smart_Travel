@@ -68,7 +68,7 @@
         <tr>
             <td class="card">
                 <div class="card-label">Total Expense</div>
-                <div class="card-value">${{ total_expense|floatformat:2 }}</div>
+                <div class="card-value">₹{{ total_expense|floatformat:2 }}</div>
             </td>
             <td class="card">
                 <div class="card-label">Members</div>
@@ -76,7 +76,7 @@
             </td>
             <td class="card">
                 <div class="card-label">Per Person</div>
-                <div class="card-value">${{ share|floatformat:2 }}</div>
+                <div class="card-value">₹{{ share|floatformat:2 }}</div>
             </td>
         </tr>
     </table>
@@ -114,12 +114,12 @@
             {% for m in member_balances %}
             <tr>
                 <td><strong>{{ m.name }}</strong></td>
-                <td>${{ m.paid|floatformat:2 }}</td>
+                <td>₹{{ m.paid|floatformat:2 }}</td>
                 <td>
                     {% if m.diff > 0 %} 
-                        <span class="badge get-back">Collect: ${{ m.diff|floatformat:2 }}</span>
+                        <span class="badge get-back">Collect: ₹{{ m.diff|floatformat:2 }}</span>
                     {% elif m.diff < 0 %} 
-                        <span class="badge owe">Pay: ${{ m.diff|floatformat:2|cut:"-" }}</span> 
+                        <span class="badge owe">Pay: ₹{{ m.diff|floatformat:2|cut:"-" }}</span> 
                     {% else %} 
                         <span style="color: #94a3b8;">Settled</span>
                     {% endif %}

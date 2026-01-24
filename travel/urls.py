@@ -47,5 +47,7 @@ urlpatterns = [
     path('photos/delete/<int:pk>/', views.delete_trip_photo, name='delete_trip_photo'),
     path('photos/suggestions/<int:suggestion_id>/<str:action>/', views.manage_face_suggestion, name='manage_face_suggestion'),
     path('face-group/rename/<int:group_id>/', views.rename_face_group, name='rename_face_group'),
+    path('face-group/delete/<int:group_id>/', views.delete_face_group, name='delete_face_group'),
     path('trip/<int:pk>/pdf/', views.export_trip_pdf, name='export_trip_pdf'),
+    path('settlements/delete/<int:pk>/', views.delete_settlement, name='delete_settlement'),
 ]

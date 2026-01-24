@@ -26,7 +26,8 @@ from .forms import (
 
 from .models import (
     Trip, TripItinerary, ChecklistItem, GroupMember,
-    Expense, CustomUser, TripPhoto, FaceGroup, PhotoFaceRelation, FaceMergeSuggestion
+    Expense, CustomUser, TripPhoto, FaceGroup, PhotoFaceRelation, FaceMergeSuggestion,
+    Settlement
 )
 
 from .utils import process_photo_faces
@@ -185,7 +186,8 @@ def trip_detail(request, pk):
     )
     
     members = trip.companions.all()
-    face_groups = trip.face_groups.all().prefetch_related('tagged_photos__photo')
+    # Only show face groups that actually have photos attached
+    face_groups = trip.face_groups.filter(tagged_photos__isnull=False).distinct().prefetch_related('tagged_photos__photo')
     all_photos = trip.photos.all().order_by('-uploaded_at')
 
     # 2. Checklist Progress Logic
@@ -217,6 +219,10 @@ def trip_detail(request, pk):
     # 3. Basic Expense Data
     expenses = trip.expenses.order_by('-date')
     total_expense = sum(e.amount for e in expenses)
+    settlements_list = trip.settlements.order_by('-date')
+
+    current_member = GroupMember.objects.filter(trip=trip, contact=request.user.email).first()
+    pending_settlement = request.session.get('pending_settlement')
 
     # --- START: MODULE 7 & 8 (REPORTS & FUTURE PREDICTION) ---
     category_totals = {}
@@ -274,11 +280,19 @@ def trip_detail(request, pk):
 
     for m in members:
         amount_paid_by_m = sum(e.amount for e in expenses if e.paid_by == m)
-        balance = amount_paid_by_m - share_per_person
+        
+        # Add payments made by m
+        payments_made = sum(s.amount for s in settlements_list if s.payer == m)
+        # Subtract payments received by m
+        payments_received = sum(s.amount for s in settlements_list if s.payee == m)
+        
+        adjusted_paid = amount_paid_by_m + payments_made - payments_received
+        balance = adjusted_paid - share_per_person
         
         member_balances.append({
             'member': m,
             'paid': amount_paid_by_m,
+            'adjusted_paid': adjusted_paid,
             'balance': balance,
             'abs_balance': abs(balance) 
         })
@@ -317,7 +331,6 @@ def trip_detail(request, pk):
     member_form = GroupMemberForm()
     expense_form = ExpenseForm()
     expense_form.fields['paid_by'].queryset = GroupMember.objects.filter(trip=trip)
-    expense_form.fields['stop'].queryset = TripItinerary.objects.filter(trip=trip)
 
     # 5. Handle POST requests
     if request.method == 'POST':
@@ -385,6 +398,66 @@ def trip_detail(request, pk):
                 expense = expense_form.save(commit=False); expense.trip = trip; expense.save()
             return redirect('trip_detail', pk=pk)
 
+        elif 'record_payment' in request.POST:
+            payer_name = request.POST.get('from_name')
+            payee_name = request.POST.get('to_name')
+            amount = request.POST.get('amount')
+            
+            payer = get_object_or_404(GroupMember, trip=trip, name=payer_name)
+            payee = get_object_or_404(GroupMember, trip=trip, name=payee_name)
+            
+            if not payee.contact:
+                messages.error(request, f"Cannot verify payment. {payee_name} has no contact info.")
+                return redirect('trip_detail', pk=pk)
+
+            code = str(random.randint(100000, 999999))
+            request.session['pending_settlement'] = {
+                'from_name': payer_name,
+                'to_name': payee_name,
+                'amount': amount,
+                'code': code,
+                'trip_id': trip.pk
+            }
+            
+            try:
+                send_mail(
+                    "Payment Verification Code",
+                    f"{payer_name} wants to record a payment of ${amount} to you. Verification code: {code}",
+                    settings.EMAIL_HOST_USER,
+                    [payee.contact]
+                )
+                messages.success(request, f"Verification code sent to {payee_name} ({payee.contact})")
+            except Exception:
+                if settings.DEBUG: messages.warning(request, f"DEBUG SETTLEMENT CODE: {code}")
+            
+            return redirect('trip_detail', pk=pk)
+
+        elif 'verify_payment' in request.POST:
+            entered = request.POST.get('code')
+            pending = request.session.get('pending_settlement')
+            
+            if pending and pending['trip_id'] == trip.pk and entered == pending['code']:
+                payer = get_object_or_404(GroupMember, trip=trip, name=pending['from_name'])
+                payee = get_object_or_404(GroupMember, trip=trip, name=pending['to_name'])
+                
+                Settlement.objects.create(
+                    trip=trip,
+                    payer=payer,
+                    payee=payee,
+                    amount=pending['amount'],
+                    date=date.today()
+                )
+                messages.success(request, f"Payment of ${pending['amount']} verified and recorded!")
+                del request.session['pending_settlement']
+            else:
+                messages.error(request, "Invalid verification code.")
+            return redirect('trip_detail', pk=pk)
+
+        elif 'cancel_settlement' in request.POST:
+            if 'pending_settlement' in request.session:
+                del request.session['pending_settlement']
+            return redirect('trip_detail', pk=pk)
+
     # 6. Fetch active merge suggestions
     suggestions = trip.merge_suggestions.filter(is_active=True)
 
@@ -419,6 +492,9 @@ def trip_detail(request, pk):
         'face_groups': face_groups,
         'all_photos': all_photos,
         'suggestions': suggestions,
+        'settlements_list': settlements_list,
+        'current_member': current_member,
+        'pending_settlement': pending_settlement,
     })
     
 @login_required
@@ -441,6 +517,8 @@ def delete_trip_photo(request, pk):
     trip = photo.trip
     if request.user == trip.user or request.user in trip.members.all():
         photo.delete()
+        # Automatically clean up any face groups that no longer have any associated photos
+        FaceGroup.objects.filter(trip=trip, tagged_photos__isnull=True).delete()
         messages.success(request, "Photo removed.")
     return redirect('trip_detail', pk=trip.pk)
 
@@ -458,6 +536,19 @@ def rename_face_group(request, group_id):
             group.save()
             messages.success(request, "Folder renamed!")
     return redirect('trip_detail', pk=group.trip.pk)
+
+
+@login_required
+def delete_face_group(request, group_id):
+    group = get_object_or_404(
+        FaceGroup.objects.filter(Q(trip__user=request.user) | Q(trip__members=request.user)).distinct(),
+        id=group_id
+    )
+    trip_pk = group.trip.pk
+    # Deleting the group also removes all PhotoFaceRelation records due to models.CASCADE
+    group.delete()
+    messages.success(request, "Person profile removed.")
+    return redirect('trip_detail', pk=trip_pk)
 
 
 @login_required
@@ -508,6 +599,16 @@ def delete_expense(request, pk):
     trip_pk = expense.trip.pk
     if expense.trip.user == request.user:
         expense.delete()
+    return redirect('trip_detail', pk=trip_pk)
+
+
+@login_required
+def delete_settlement(request, pk):
+    settlement = get_object_or_404(Settlement, pk=pk)
+    trip_pk = settlement.trip.pk
+    if settlement.trip.user == request.user:
+        settlement.delete()
+        messages.success(request, "Settlement record removed.")
     return redirect('trip_detail', pk=trip_pk)
 
 

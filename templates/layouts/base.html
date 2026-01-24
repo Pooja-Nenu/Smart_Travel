@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Travel{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{% static 'css/modern-travel.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+    <div class="app-container">
+        <!-- Sidebar Inclusion -->
+        {% include 'includes/sidebar.html' %}
+
+        <div class="main-wrapper">
+            <!-- Navbar Inclusion -->
+            {% include 'includes/navbar.html' %}
+
+            <!-- Main Content Area -->
+            <main class="content-container">
+                {% if messages %}
+                <div class="messages-container" style="margin-bottom: 24px;">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}"
+                        style="padding: 1rem; border-radius: var(--radius-md); background: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid var(--border-color); margin-bottom: 12px;">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="{% static 'js/modern-travel.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

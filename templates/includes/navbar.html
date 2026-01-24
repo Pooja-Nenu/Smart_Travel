@@ -1,0 +1,70 @@
+<nav class="navbar">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <button id="menuToggle" class="btn btn-outline" style="padding: 8px 12px; border: none;">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h2 style="font-size: 1.125rem; font-weight: 700; color: var(--text-main);">
+            {% block page_title %}Overview{% endblock %}
+        </h2>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <!-- Theme Toggle -->
+        <button id="themeToggle" class="btn btn-outline" style="padding: 8px 12px; border: none; font-size: 1.125rem;"
+            title="Toggle Theme">
+            <i class="fas fa-moon"></i>
+        </button>
+
+        <!-- Profile Dropdown -->
+        <div class="profile-dropdown" style="position: relative;">
+            <button class="dropdown-toggle"
+                style="background: none; border: none; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <div
+                    style="width: 36px; height: 36px; background: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--primary);">
+                    {{ user.first_name|first|default:user.username|first|upper }}
+                </div>
+                <div class="user-info" style="text-align: left;">
+                    <p style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">{{
+                        user.first_name|default:user.username }}</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">{{ user.email|default:"Traveler" }}</p>
+                </div>
+                <i class="fas fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+            </button>
+            <div class="dropdown-menu"
+                style="position: absolute; top: 100%; right: 0; margin-top: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 10px 15px -3px var(--shadow-color); min-width: 200px; display: none; z-index: 1000;">
+                <a href="{% url 'profile' %}"
+                    style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; color: var(--text-main); font-size: 0.875rem; transition: background 0.2s;">
+                    <i class="fas fa-user-circle" style="color: var(--text-muted);"></i> Profile Settings
+                </a>
+                <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                <a href="{% url 'logout' %}"
+                    style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; color: var(--danger); font-size: 0.875rem; transition: background 0.2s;">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .dropdown-menu.show {
+        display: block !important;
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .dropdown-menu a:hover {
+        background-color: var(--hover-bg);
+    }
+</style>

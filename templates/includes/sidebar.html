@@ -1,0 +1,45 @@
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="{% url 'dashboard' %}" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+            <div
+                style="width: 36px; height: 36px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                <i class="fas fa-plane"></i>
+            </div>
+            <span class="logo-text">SmartTravel</span>
+        </a>
+    </div>
+
+    <div class="sidebar-menu">
+        <div class="menu-section">
+            <div class="menu-label">Exploration</div>
+            <a href="{% url 'dashboard' %}"
+                class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'trip_list' %}"
+                class="menu-item {% if 'trip' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-suitcase-rolling"></i>
+                <span>My Trips</span>
+            </a>
+            <a href="{% url 'checklist_dashboard' %}"
+                class="menu-item {% if 'checklist' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Checklists</span>
+            </a>
+        </div>
+
+        <div class="menu-section" style="margin-top: 32px;">
+            <div class="menu-label">Personal</div>
+            <a href="{% url 'profile' %}"
+                class="menu-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </a>
+            <a href="{% url 'logout' %}" class="menu-item" style="color: var(--danger);">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+</aside>

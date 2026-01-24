@@ -134,12 +134,15 @@ class GroupMemberForm(forms.ModelForm):
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ['title', 'amount', 'paid_by', 'category', 'date', 'stop']
+        fields = ['title', 'amount', 'paid_by', 'category', 'date']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Dinner at Beach'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00'}),
             'paid_by': forms.Select(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'stop': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['paid_by'].empty_label = "Select Member"
