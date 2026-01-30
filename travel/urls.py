@@ -50,4 +50,5 @@ urlpatterns = [
     path('face-group/delete/<int:group_id>/', views.delete_face_group, name='delete_face_group'),
     path('trip/<int:pk>/pdf/', views.export_trip_pdf, name='export_trip_pdf'),
     path('settlements/delete/<int:pk>/', views.delete_settlement, name='delete_settlement'),
+    path('trip/<int:pk>/search-face/', views.search_photos_by_face, name='search_photos_by_face'), # Face Match Feature
 ]

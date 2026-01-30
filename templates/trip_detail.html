@@ -1047,7 +1047,9 @@
                             <div class="checklist-header" style="margin-bottom: 15px;">
                                 <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Total
                                     Expenses</h3>
-                                <span style="font-size:18px; font-weight:700; color:var(--blue);">₹{{total_expense|floatformat:2 }}</span>
+                                <span
+                                    style="font-size:18px; font-weight:700; color:var(--blue);">₹{{total_expense|floatformat:2
+                                    }}</span>
                             </div>
                         </div>
 
@@ -1060,7 +1062,8 @@
                                         <i class="fas fa-receipt"></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">{{expense.title }}</div>
+                                        <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">
+                                            {{expense.title }}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
                                             <span class="priority-badge p-low"
                                                 style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{expense.category}}</span>
@@ -1200,6 +1203,10 @@
 
                 <div class="filter-header">
                     <h3 style="margin: 0; color: var(--text-main); font-weight: 700;">People</h3>
+                    <button class="btn-add" onclick="openCameraModal()"
+                        style="width: auto; padding: 6px 12px; margin: 0; background: var(--blue); color: white; display: flex; align-items: center; gap: 5px; font-size: 13px; margin-right: 10px;">
+                        <i class="fas fa-camera-retro"></i> Find Me
+                    </button>
                     <button class="clear-filter-btn" id="clearFilter" onclick="filterByPerson(null)">
                         <i class="fas fa-times" style="margin-right: 5px;"></i> Show All
                     </button>
@@ -1311,7 +1318,7 @@
                 <div class="photo-grid-unified" id="photoGrid"
                     style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
                     {% for photo in all_photos %}
-                    <div class="photo-card-wrapper"
+                    <div class="photo-card-wrapper" data-pk="{{ photo.pk }}"
                         data-groups="[{% for rel in photo.faces.all %}{{ rel.face_group.id }}{% if not forloop.last %},{% endif %}{% endfor %}]">
                         <a href="{% url 'delete_trip_photo' photo.pk %}" class="photo-delete-overlay"
                             onclick="return confirm('Delete this photo permanently?')">
@@ -1342,12 +1349,14 @@
                                 <div>
                                     <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">TOTAL TRIP
                                         EXPENSE</p>
-                                    <h2 style="margin: 5px 0 0 0; font-size: 32px; font-weight: 800;">₹{{total_expense|floatformat:2 }}</h2>
+                                    <h2 style="margin: 5px 0 0 0; font-size: 32px; font-weight: 800;">
+                                        ₹{{total_expense|floatformat:2 }}</h2>
                                 </div>
                                 <div style="text-align: right;">
                                     <p style="margin: 0; opacity: 0.8; font-size: 13px; font-weight: 600;">EACH MEMBER'S
                                         SHARE</p>
-                                    <h3 style="margin: 5px 0 0 0; font-size: 24px; font-weight: 700;">₹{{share_per_person|floatformat:2 }}</h3>
+                                    <h3 style="margin: 5px 0 0 0; font-size: 24px; font-weight: 700;">
+                                        ₹{{share_per_person|floatformat:2 }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -1372,9 +1381,11 @@
                                 </div>
                                 <div style="text-align: right;">
                                     {% if item.balance > 0.01 %}
-                                    <span style="color: #10B981; font-weight: 700; font-size: 14px;">Gets back: ₹{{item.abs_balance|floatformat:2 }}</span>
+                                    <span style="color: #10B981; font-weight: 700; font-size: 14px;">Gets back:
+                                        ₹{{item.abs_balance|floatformat:2 }}</span>
                                     {% elif item.balance < -0.01 %} <span
-                                        style="color: #EF4444; font-weight: 700; font-size: 14px;">Owes: ₹{{item.abs_balance|floatformat:2 }}</span>
+                                        style="color: #EF4444; font-weight: 700; font-size: 14px;">Owes:
+                                        ₹{{item.abs_balance|floatformat:2 }}</span>
                                         {% else %}
                                         <span
                                             style="color: var(--text-muted); font-weight: 600; font-size: 14px;">Settled</span>
@@ -1429,7 +1440,8 @@
                                 <strong style="color: #10B981;">{{ s.to }}</strong>
                             </div>
                             <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="font-weight: 800; color: var(--text-main); font-size: 15px;">₹{{s.amount|floatformat:2 }}</div>
+                                <div style="font-weight: 800; color: var(--text-main); font-size: 15px;">
+                                    ₹{{s.amount|floatformat:2 }}</div>
                                 {% if s.from == current_member.name %}
                                 <form method="POST">
                                     {% csrf_token %}
@@ -1607,7 +1619,174 @@
         </div>
     </div>
 
+    <div id="cameraModal" class="add-card"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+        <h4 style="margin-bottom: 15px; font-weight: 700;">Find Me</h4>
+
+        <!-- Error Container -->
+        <div id="cameraError"
+            style="display: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid transparent;">
+        </div>
+
+        <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000;">
+            <video id="webcam" autoplay playsinline style="width: 100%; height: auto; transform: scaleX(-1);"></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="closeCameraModal()" class="action-btn"
+                style="width: auto; padding: 0 15px; background: var(--hover-bg); border: 1px solid var(--border-color);">Cancel</button>
+            <button onclick="captureAndSearch()" class="btn-add" style="margin: 0; width: auto; padding: 0 20px;">
+                <i class="fas fa-search" style="margin-right: 5px;"></i> Search
+            </button>
+        </div>
+    </div>
+    <div id="modalOverlay" onclick="closeCameraModal()"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;">
+    </div>
+
     <script>
+        // --- FIND ME (WEBCAM SEARCH) ---
+        let videoStream = null;
+
+        function openCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            const overlay = document.getElementById('modalOverlay');
+            const video = document.getElementById('webcam');
+            const errorDiv = document.getElementById('cameraError');
+
+            // Reset error
+            if (errorDiv) errorDiv.style.display = 'none';
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function (stream) {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        modal.style.display = 'block';
+                        overlay.style.display = 'block';
+                    })
+                    .catch(function (err) {
+                        console.log("An error occurred: " + err);
+                        showCameraError("Could not access webcam. Please check permissions.", "error");
+                    });
+            }
+        }
+
+        function closeCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            const overlay = document.getElementById('modalOverlay');
+            const video = document.getElementById('webcam');
+
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        function captureAndSearch() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to Blob
+            canvas.toBlob(function (blob) {
+                const formData = new FormData();
+                formData.append('image', blob, 'selfie.jpg');
+
+                // Show loading state (optional) or just wait
+                const searchBtn = document.querySelector('#cameraModal .btn-add');
+                const originalText = searchBtn.innerHTML;
+                searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+                searchBtn.disabled = true;
+
+                fetch("{% url 'search_photos_by_face' trip.pk %}", {
+                    method: 'POST',
+                    heading: {
+                        'X-CSRFToken': '{{ csrf_token }}' // Just in case, though view is csrf_exempt
+                    },
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        searchBtn.innerHTML = originalText;
+                        searchBtn.disabled = false;
+
+                        if (data.error) {
+                            showCameraError(data.error, "error");
+                        } else if (data.photo_ids) {
+                            if (data.photo_ids.length === 0) {
+                                showCameraError("No matching photos found in this trip.", "info");
+                            } else {
+                                closeCameraModal();
+                                filterByFaceIds(data.photo_ids);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showCameraError("Something went wrong during search.", "error");
+                        searchBtn.innerHTML = originalText;
+                        searchBtn.disabled = false;
+                    });
+            }, 'image/jpeg');
+        }
+
+        function filterByFaceIds(ids) {
+            const grid = document.getElementById('photoGrid');
+            if (!grid) return;
+            const photos = grid.querySelectorAll('.photo-card-wrapper');
+            const clearBtn = document.getElementById('clearFilter');
+            const gridTitle = document.getElementById('photoGridTitle');
+
+            // Reset any previous group filters
+            document.querySelectorAll('.person-item').forEach(item => item.classList.remove('active'));
+            currentGroupId = null;
+
+            if (ids.length === 0) {
+                // Should be handled by caller, but just in case:
+                console.log("No matching photos found.");
+                return;
+            }
+
+            let count = 0;
+            photos.forEach(p => {
+                const pk = parseInt(p.getAttribute('data-pk'));
+                if (ids.includes(pk)) {
+                    p.style.display = 'block';
+                    count++;
+                } else {
+                    p.style.display = 'none';
+                }
+            });
+
+            if (clearBtn) clearBtn.style.display = 'block';
+            if (gridTitle) gridTitle.innerText = `Found ${count} Photos of You`;
+        }
+
+        function showCameraError(msg, type) {
+            const errorDiv = document.getElementById('cameraError');
+            if (!errorDiv) return;
+
+            errorDiv.style.display = 'block';
+            errorDiv.innerText = msg;
+
+            if (type === 'error') {
+                errorDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+                errorDiv.style.color = '#EF4444';
+                errorDiv.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+            } else {
+                errorDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+                errorDiv.style.color = '#10B981';
+                errorDiv.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+            }
+        }
+
         // --- UTILITY FUNCTIONS ---
         function openTab(tabName, btnElement) {
             const contents = document.getElementsByClassName("tab-content");
@@ -1627,7 +1806,7 @@
             if (btnElement) {
                 btnElement.classList.add("active");
             } else {
-                const btn = document.querySelector(`button[onclick*="openTab('₹{tabName}'"]`);
+                const btn = document.querySelector(`button[onclick*="openTab('${tabName}'"]`);
                 if (btn) btn.classList.add("active");
             }
             localStorage.setItem('activeTab', tabName);
@@ -1779,7 +1958,7 @@
                 if (clearBtn) clearBtn.style.display = 'block';
 
                 const name = element.getAttribute('data-name');
-                if (gridTitle) gridTitle.innerText = `Photos of ₹{name}`;
+                if (gridTitle) gridTitle.innerText = `Photos of ${name}`;
                 currentGroupId = groupId;
 
                 if (renameBox) {
@@ -1857,7 +2036,7 @@
                     if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
                     clearTimeout(locationTimeout);
                     locationTimeout = setTimeout(() => {
-                        fetch(`https://photon.komoot.io/api/?q=₹{query}&limit=5`)
+                        fetch(`https://photon.komoot.io/api/?q=${query}&limit=5`)
                             .then(response => response.json())
                             .then(data => {
                                 suggestionsBox.innerHTML = '';
@@ -1875,7 +2054,7 @@
                                             seen.add(fullLocation);
                                             const div = document.createElement('div');
                                             div.classList.add('suggestion-item');
-                                            div.innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right:8px; color:var(--text-muted);"></i> ₹{fullLocation}`;
+                                            div.innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right:8px; color:var(--text-muted);"></i> ${fullLocation}`;
                                             div.addEventListener('click', function () {
                                                 locationInput.value = fullLocation;
                                                 suggestionsBox.style.display = 'none';
@@ -1898,36 +2077,37 @@
             // 5. Expense Chart (Chart.js)
             const ctx = document.getElementById('expenseChart');
             if (ctx) {
-                const reportLabels = {{ report_labels|safe }};
-                const reportData = {{ report_data|safe }};
+                // Fixed: Corrected the template tag syntax and removed dangling braces
+                const reportLabels = {{ report_labels|safe|default:"[]" }};
+                const reportData = {{ report_data|safe|default:"[]" }};
 
-        if (reportLabels && reportLabels.length > 0) {
-            new Chart(ctx.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: reportLabels,
-                    datasets: [{
-                        data: reportData,
-                        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#333'
+                if (reportLabels && reportLabels.length > 0) {
+                    new Chart(ctx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: reportLabels,
+                            datasets: [{
+                                data: reportData,
+                                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: getComputedStyle(document.body).getPropertyValue('--text-main').trim() || '#333'
+                                    }
+                                }
                             }
                         }
-                    }
+                    });
                 }
-            });
-        }
             }
-        });
+        }); 
     </script>
 </body>
 

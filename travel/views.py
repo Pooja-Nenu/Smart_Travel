@@ -743,3 +743,94 @@ def export_trip_pdf(request, pk):
     if pisa_status.err:
         return HttpResponse('We had some errors <pre>' + html + '</pre>')
     return response
+
+
+from django.views.decorators.csrf import csrf_exempt
+import json
+import numpy as np
+import pickle
+
+@csrf_exempt
+def search_photos_by_face(request, pk):
+    """
+    Accepts a POST request with a 'face_image' file (snapshot from webcam).
+    Detects the face in the uploaded image and compares it with existing FaceGroup encodings for this trip.
+    Returns a JSON list of matching photo IDs.
+    """
+    if request.method != 'POST':
+        return HttpResponse(status=405) # Method Not Allowed
+
+    trip = get_object_or_404(Trip, pk=pk)
+    
+    # Check permissions (basic check)
+    if request.user != trip.user and request.user not in trip.members.all():
+        return HttpResponse(status=403)
+
+    uploaded_file = request.FILES.get('image')
+    if not uploaded_file:
+        return HttpResponse(json.dumps({'error': 'No image provided'}), content_type="application/json", status=400)
+
+    import face_recognition # Import here to avoid overhead if not used
+    from PIL import Image
+
+    try:
+        # Load the uploaded image
+        # 'uploaded_file' is an InMemoryUploadedFile or TemporaryUploadedFile
+        # face_recognition.load_image_file simply reads it into a numpy array.
+        # Let's use PIL to ensure it's RGB and valid before passing to face_recognition
+        
+        pil_image = Image.open(uploaded_file)
+        pil_image = pil_image.convert('RGB')
+        image = np.array(pil_image)
+        
+        print(f"DEBUG: Processing image for face search. Shape: {image.shape}")
+
+        # Detect faces in the uploaded image
+        # First try 'hog' model
+        face_locations = face_recognition.face_locations(image, model="hog")
+        if not face_locations:
+            print("DEBUG: No faces found with HOG. Trying CNN...")
+            # Fallback to CNN if possible - note: CNN is much slower without GPU
+            # But for a single lookup it might be acceptable if HOG fails
+            # Actually, standard dlib HOG is usually fine for frontal selfies.
+            # If it fails, maybe the image is too small or rotated?
+            # PIL load usually respects orientation if handled, but let's check.
+            pass
+            
+        face_encodings = face_recognition.face_encodings(image, face_locations)
+
+        if not face_encodings:
+             print("DEBUG: Still no face encodings found.")
+             return HttpResponse(json.dumps({'error': 'No face detected. Please ensure your face is clearly visible and well-lit.'}), content_type="application/json")
+
+        # Use the first face found
+        uploaded_face_encoding = face_encodings[0]
+
+        # Get all FaceGroups for this trip that have a valid encoding
+        face_groups = FaceGroup.objects.filter(trip=trip).exclude(representative_encoding=None)
+        
+        matching_photo_ids = set()
+
+        for group in face_groups:
+            if not group.representative_encoding:
+                continue
+                
+            try:
+                group_encoding = pickle.loads(group.representative_encoding)
+                
+                # Calculate distance
+                distance = face_recognition.face_distance([group_encoding], uploaded_face_encoding)[0]
+                
+                if distance <= 0.55:
+                    photos = group.tagged_photos.values_list('photo_id', flat=True)
+                    matching_photo_ids.update(photos)
+            except Exception:
+                continue
+
+        return HttpResponse(json.dumps({'photo_ids': list(matching_photo_ids)}), content_type="application/json")
+
+    except Exception as e:
+        print(f"Error in search_photos_by_face: {e}")
+        import traceback
+        traceback.print_exc()
+        return HttpResponse(json.dumps({'error': f'Server Error: {str(e)}'}), content_type="application/json", status=500)
