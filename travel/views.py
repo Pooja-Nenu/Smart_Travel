@@ -16,7 +16,18 @@ import matplotlib
 matplotlib.use('Agg') # Use a non-interactive backend
 import io
 import base64
+import openai
+from django.conf import settings
+from django.contrib import messages
+from .models import Trip, ChecklistItem,TripItinerary
+import re
+import json
+from django.http import JsonResponse
+from groq import Groq
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 
 from .forms import (
@@ -168,7 +179,6 @@ def trip_delete(request, pk):
 
 
 @login_required
-@login_required
 def trip_detail(request, pk):
     # 1. Fetch the trip and related data
     trip = get_object_or_404(
@@ -237,7 +247,6 @@ def trip_detail(request, pk):
     today = date.today()
     total_trip_days = (trip.end_date - trip.start_date).days + 1
     
-    # કેટલા દિવસો વીતી ગયા અને કેટલા બાકી છે તેની ગણતરી
     if today < trip.start_date:
         days_passed = 0
         days_remaining = total_trip_days
@@ -748,7 +757,7 @@ def export_trip_pdf(request, pk):
 from django.views.decorators.csrf import csrf_exempt
 import json
 import numpy as np
-import pickle
+import pickle 
 
 @csrf_exempt
 def search_photos_by_face(request, pk):
@@ -781,7 +790,9 @@ def search_photos_by_face(request, pk):
         
         pil_image = Image.open(uploaded_file)
         pil_image = pil_image.convert('RGB')
-        image = np.array(pil_image)
+
+        # FIX: Force the array to be 8-bit uint8 and memory-contiguous
+        image = np.ascontiguousarray(np.array(pil_image), dtype=np.uint8)
         
         print(f"DEBUG: Processing image for face search. Shape: {image.shape}")
 
@@ -834,3 +845,61 @@ def search_photos_by_face(request, pk):
         import traceback
         traceback.print_exc()
         return HttpResponse(json.dumps({'error': f'Server Error: {str(e)}'}), content_type="application/json", status=500)
+
+
+
+@login_required
+def generate_ai_packing(request, trip_id):
+    if request.method != "POST":
+        return JsonResponse({'status': 'failed'}, status=400)
+
+    try:
+        # 1. Get Trip Data (Using get_object_or_404 is safer)
+        from django.shortcuts import get_object_or_404
+        trip = get_object_or_404(Trip, id=trip_id)
+
+        # 2. Get Stops using the correct related_name 'itinerary'
+        stops = trip.itinerary.all() 
+        # Using s.location because that is the field name in your TripItinerary model
+        stops_list = ", ".join([s.location for s in stops])
+
+        # 3. Construct the Llama Prompt
+        prompt = f"""
+        Generate a travel packing list for a trip to {trip.destination}.
+        Dates: From {trip.start_date} to {trip.end_date}.
+        Itinerary Stops: {stops_list if stops_list else 'No specific stops'}.
+        
+        Provide the result ONLY as a comma-separated list of items. 
+        Example: Passport, Phone Charger, Sunscreen, Walking Shoes
+        Do not include any intro or outro text.
+        """
+
+        # 4. Call Llama API
+        from groq import Groq
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+        )
+
+        # 5. Process the AI response
+        ai_response = chat_completion.choices[0].message.content
+        items_to_add = [item.strip() for item in ai_response.split(',') if item.strip()]
+
+        # 6. Save to Database (Using ChecklistItem and item_name)
+        for item in items_to_add:
+            ChecklistItem.objects.get_or_create(
+                trip=trip,
+                item_name=item[:200], # Field name is 'item_name' in your models.py
+                defaults={
+                    'priority': 'Medium', 
+                    'is_personal': False,
+                    'user': request.user # Associates the item with the logged-in user
+                }
+            )
+
+        return JsonResponse({'status': 'success', 'items_added': len(items_to_add)})
+
+    except Exception as e:
+        # Returning the actual error message helps you debug in the browser console
+        return JsonResponse({'status': 'failed', 'message': str(e)}, status=500)

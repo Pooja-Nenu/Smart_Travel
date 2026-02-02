@@ -758,6 +758,13 @@
                                     style="padding: 8px 15px; font-size: 13px;">
                                     <i class="fas fa-user-lock" style="margin-right: 5px;"></i> Personal Items
                                 </button>
+                                <div class="ai-generator-container" style="margin-bottom: 20px;">
+                                    <button id="aiBtn" class="btn-add" onclick="generateLlamaChecklist()" 
+                                            style="width: auto; padding: 10px 20px; background: var(--hover-bg); color: var(--blue); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; border-radius: 8px; cursor: pointer;">
+                                        <span id="btnSpinner" style="display:none;">🧬</span> 
+                                        <span id="btnText">✨ AI Generated items</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -775,11 +782,11 @@
                                             {% endif %}
                                         </a>
                                         <div>
-                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{
-                                                item.item_name }}</span>
+                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
+                                                
                                             <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                                                <span class="priority-badge p-{{ item.priority|lower }}">{{
-                                                    item.priority }}</span>
+                                                <span class="priority-badge p-{{ item.priority|lower }}">{{ item.priority }}</span>
+                                                    
                                                 {% if item.stop %}
                                                 <span class="priority-badge p-low"
                                                     style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
@@ -825,11 +832,11 @@
                                             {% endif %}
                                         </a>
                                         <div>
-                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{
-                                                item.item_name }}</span>
+                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
+                                                
                                             <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                                                <span class="priority-badge p-{{ item.priority|lower }}">{{
-                                                    item.priority }}</span>
+                                                <span class="priority-badge p-{{ item.priority|lower }}">{{ item.priority }}</span>
+                                                    
                                                 {% if item.stop %}
                                                 <span class="priority-badge p-low"
                                                     style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
@@ -2108,6 +2115,56 @@
                 }
             }
         }); 
+        async function generateLlamaChecklist() {
+        const btn = document.getElementById('aiBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        // 1. Show loading state (don't hide the button, just disable it)
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'not-allowed';
+        
+        if(btnText) btnText.innerText = "Llama is thinking...";
+        if(btnSpinner) btnSpinner.style.display = 'inline-block';
+
+        try {
+            // 2. Fetch call using the Django URL tag
+            const response = await fetch("{% url 'generate_ai_packing' trip.id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ trip_id: "{{ trip.id }}" })
+            });
+
+            const data = await response.json();
+
+            // 3. Handle result
+            if (data.status === 'success') {
+                // Refresh page to show new items in the list below
+                window.location.reload(); 
+            } else {
+                alert("AI Error: " + (data.message || "Failed to generate items. Make sure your API key is set."));
+                resetButton(btn, btnText, btnSpinner);
+            }
+
+        } catch (error) {
+            console.error('Fetch Error:', error);
+            alert("Connection failed. Check your terminal for errors.");
+            resetButton(btn, btnText, btnSpinner);
+        }
+    }
+
+    function resetButton(btn, text, spinner) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        if(text) text.innerText = "✨ AI Generated items";
+        if(spinner) spinner.style.display = 'none';
+    }
+
     </script>
 </body>
 

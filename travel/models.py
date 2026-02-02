@@ -34,7 +34,7 @@ class Trip(models.Model):
     end_date = models.DateField()
     description = models.TextField(blank=True, null=True)
     
-    # બજેટ ફિલ્ડ અહીં જ રાખવું
+    
     budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     created_at = models.DateTimeField(auto_now_add=True)

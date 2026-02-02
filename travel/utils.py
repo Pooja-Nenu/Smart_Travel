@@ -27,8 +27,10 @@ def process_photo_faces(photo_id):
             # 2. Force convert to RGB (Fixes Alpha/Transparency/CMYK issues)
             pil_img = pil_img.convert('RGB')
             
-            # 3. Explicitly cast to uint8 array
-            image_array = np.ascontiguousarray(np.array(pil_img, dtype='uint8'))
+            # 3. Explicitly cast to uint8 array and ensure C-contiguous memory layout
+            # This is the critical line for dlib compatibility
+            image_array = np.array(pil_img, dtype=np.uint8)
+            image_array = np.ascontiguousarray(image_array)
 
             # Detect faces - get BOTH locations and encodings
             # We use 'hog' for speed, but 'cnn' is more accurate (needs GPU/CPU power)
