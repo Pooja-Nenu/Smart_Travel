@@ -1632,21 +1632,26 @@
 
         <!-- Error Container -->
         <div id="cameraError"
-            style="display: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid transparent;">
+            style="display: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #ffcccc; background: #ffeeee; color: #cc0000;">
         </div>
 
         <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000;">
+            <!-- Mirror effect added for natural feel, playsinline for mobile -->
             <video id="webcam" autoplay playsinline style="width: 100%; height: auto; transform: scaleX(-1);"></video>
             <canvas id="canvas" style="display: none;"></canvas>
         </div>
+
         <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
             <button onclick="closeCameraModal()" class="action-btn"
                 style="width: auto; padding: 0 15px; background: var(--hover-bg); border: 1px solid var(--border-color);">Cancel</button>
-            <button onclick="captureAndSearch()" class="btn-add" style="margin: 0; width: auto; padding: 0 20px;">
+            
+            <!-- Added id="searchBtn" to control loading state -->
+            <button id="searchBtn" onclick="captureAndSearch()" class="btn-add" style="margin: 0; width: auto; padding: 0 20px;">
                 <i class="fas fa-search" style="margin-right: 5px;"></i> Search
             </button>
         </div>
     </div>
+
     <div id="modalOverlay" onclick="closeCameraModal()"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;">
     </div>
@@ -2164,7 +2169,145 @@
         if(text) text.innerText = "✨ AI Generated items";
         if(spinner) spinner.style.display = 'none';
     }
+let stream = null;
 
+// 1. Open Modal and Start HD Camera
+    async function openCameraModal() {
+        document.getElementById('cameraModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+        document.getElementById('cameraError').style.display = 'none';
+
+        const video = document.getElementById('webcam');
+        
+        // Constraints for High Accuracy (HD)
+        const constraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: "user"
+            }
+        };
+
+        try {
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = stream;
+        } catch (err) {
+            showCameraError("Camera access denied or not found.");
+            console.error(err);
+        }
+    }
+
+    // 2. Close Modal and Stop Camera
+    function closeCameraModal() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        document.getElementById('cameraModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    // 3. Capture Photo and Search using FAISS
+    async function captureAndSearch() {
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const searchBtn = document.getElementById('searchBtn');
+        const errorDiv = document.getElementById('cameraError');
+
+        // Prepare Canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        
+        // Capture Frame
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to High-Quality Blob (1.0 = 100% Quality for AI)
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('image', blob, 'search.jpg');
+
+            // Loading State UI
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+            errorDiv.style.display = 'none';
+
+            try {
+                // Get Trip ID from URL (e.g., /trips/2/ -> ID is 2)
+                const pathParts = window.location.pathname.split('/');
+                const tripId = pathParts[pathParts.length - 2] || pathParts[pathParts.length - 1];
+
+                const response = await fetch(`/trips/${tripId}/search-face/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.photo_ids) {
+                    closeCameraModal();
+                    filterPhotosByIDs(data.photo_ids); // Custom function to show results
+                } else if (data.error) {
+                    showCameraError(data.error);
+                }
+            } catch (err) {
+                showCameraError("Server error. Please try again later.");
+                console.error(err);
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+            }
+        }, 'image/jpeg', 1.0);
+    }
+
+    // Helper: Show Error Message
+    function showCameraError(msg) {
+        const errorDiv = document.getElementById('cameraError');
+        errorDiv.innerText = msg;
+        errorDiv.style.display = 'block';
+    }
+
+    // Helper: Filter Gallery by IDs returned from FAISS
+    function filterPhotosByIDs(photoIds) {
+        if (photoIds.length === 0) {
+            alert("No matching photos found for your face in this trip.");
+            return;
+        }
+
+        // assuming your photos have class 'photo-item' and data-id attribute
+        const allPhotos = document.querySelectorAll('.photo-card'); // Adjust class name to your CSS
+        
+        allPhotos.forEach(photo => {
+            // Find the photo ID from your data attribute (check your HTML)
+            const id = photo.getAttribute('data-photo-id'); 
+            if (photoIds.includes(parseInt(id))) {
+                photo.style.display = 'block';
+            } else {
+                photo.style.display = 'none';
+            }
+        });
+
+        // Optional: Scroll to results
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // CSRF Token Helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }   
     </script>
 </body>
 

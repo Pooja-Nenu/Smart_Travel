@@ -19,7 +19,7 @@ import base64
 import openai
 from django.conf import settings
 from django.contrib import messages
-from .models import Trip, ChecklistItem,TripItinerary
+from .models import Trip, ChecklistItem,TripItinerary,FaceGroup, PhotoFaceRelation
 import re
 import json
 from django.http import JsonResponse
@@ -758,96 +758,99 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import numpy as np
 import pickle 
+import faiss                       
+from PIL import Image, ImageOps
 
 @csrf_exempt
 def search_photos_by_face(request, pk):
-    """
-    Accepts a POST request with a 'face_image' file (snapshot from webcam).
-    Detects the face in the uploaded image and compares it with existing FaceGroup encodings for this trip.
-    Returns a JSON list of matching photo IDs.
-    """
     if request.method != 'POST':
-        return HttpResponse(status=405) # Method Not Allowed
+        return HttpResponse(status=405)
 
     trip = get_object_or_404(Trip, pk=pk)
-    
-    # Check permissions (basic check)
-    if request.user != trip.user and request.user not in trip.members.all():
-        return HttpResponse(status=403)
-
     uploaded_file = request.FILES.get('image')
+    
     if not uploaded_file:
         return HttpResponse(json.dumps({'error': 'No image provided'}), content_type="application/json", status=400)
 
-    import face_recognition # Import here to avoid overhead if not used
-    from PIL import Image
+    import face_recognition 
+    from PIL import ImageEnhance, ImageOps
+    import json
+    import numpy as np
+    import pickle
+    import faiss
 
     try:
-        # Load the uploaded image
-        # 'uploaded_file' is an InMemoryUploadedFile or TemporaryUploadedFile
-        # face_recognition.load_image_file simply reads it into a numpy array.
-        # Let's use PIL to ensure it's RGB and valid before passing to face_recognition
-        
         pil_image = Image.open(uploaded_file)
+        pil_image = ImageOps.exif_transpose(pil_image)
         pil_image = pil_image.convert('RGB')
+        
+        # --- NEW: Maximum Sharpness Boost ---
+        # Webcam images are usually grainy, auto-contrast and high sharpness will fix this
+        pil_image = ImageOps.autocontrast(pil_image)
+        enhancer = ImageEnhance.Sharpness(pil_image)
+        pil_image = enhancer.enhance(4.0) # Maximum sharpness
 
-        # FIX: Force the array to be 8-bit uint8 and memory-contiguous
         image = np.ascontiguousarray(np.array(pil_image), dtype=np.uint8)
         
-        print(f"DEBUG: Processing image for face search. Shape: {image.shape}")
-
-        # Detect faces in the uploaded image
-        # First try 'hog' model
-        face_locations = face_recognition.face_locations(image, model="hog")
+        # Increase upsampling to catch fine details
+        face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=2, model="hog")
+        
         if not face_locations:
-            print("DEBUG: No faces found with HOG. Trying CNN...")
-            # Fallback to CNN if possible - note: CNN is much slower without GPU
-            # But for a single lookup it might be acceptable if HOG fails
-            # Actually, standard dlib HOG is usually fine for frontal selfies.
-            # If it fails, maybe the image is too small or rotated?
-            # PIL load usually respects orientation if handled, but let's check.
-            pass
+            return HttpResponse(json.dumps({'error': 'Face not detected. Please ensure your face is well-lit and directly facing the camera.'}), content_type="application/json")
             
-        face_encodings = face_recognition.face_encodings(image, face_locations)
+        # Multi-jittering to stabilize the webcam face capture
+        face_encodings = face_recognition.face_encodings(image, face_locations, model="large", num_jitters=5)
 
         if not face_encodings:
-             print("DEBUG: Still no face encodings found.")
-             return HttpResponse(json.dumps({'error': 'No face detected. Please ensure your face is clearly visible and well-lit.'}), content_type="application/json")
+             return HttpResponse(json.dumps({'error': 'Could not extract features.'}), content_type="application/json")
 
-        # Use the first face found
         uploaded_face_encoding = face_encodings[0]
-
-        # Get all FaceGroups for this trip that have a valid encoding
-        face_groups = FaceGroup.objects.filter(trip=trip).exclude(representative_encoding=None)
-        
+        face_groups = list(FaceGroup.objects.filter(trip=trip).exclude(representative_encoding=None))
         matching_photo_ids = set()
 
-        for group in face_groups:
-            if not group.representative_encoding:
-                continue
+        if face_groups:
+            dimension = 128
+            index = faiss.IndexFlatL2(dimension)
+            db_encodings, valid_groups = [], []
+            for group in face_groups:
+                try:
+                    encoding = pickle.loads(group.representative_encoding)
+                    db_encodings.append(encoding)
+                    valid_groups.append(group)
+                except: continue
+            
+            if db_encodings:
+                index.add(np.array(db_encodings).astype('float32'))
+                query_vector = np.array([uploaded_face_encoding]).astype('float32')
                 
-            try:
-                group_encoding = pickle.loads(group.representative_encoding)
+                # Check top 5 matches
+                distances, indices = index.search(query_vector, k=min(5, len(valid_groups)))
                 
-                # Calculate distance
-                distance = face_recognition.face_distance([group_encoding], uploaded_face_encoding)[0]
-                
-                if distance <= 0.55:
-                    photos = group.tagged_photos.values_list('photo_id', flat=True)
-                    matching_photo_ids.update(photos)
-            except Exception:
-                continue
+                for dist, idx in zip(distances[0], indices[0]):
+                    if idx == -1: continue
+                    
+                    actual_distance = np.sqrt(dist)
+                    accuracy_percent = max(0, (1 - actual_distance) * 100)
+
+                    # IMPORTANT: Check your VS Code terminal for this output!
+                    print(f"DEBUG SEARCH: Group {valid_groups[idx].id} | Distance: {actual_distance:.4f} | Accuracy: {accuracy_percent:.2f}%")
+
+                    # --- BALANCED THRESHOLD (0.55) ---
+                    # 0.55 is loose enough to find you in a webcam photo, 
+                    # but still strict enough to keep most others out.
+                    if actual_distance <= 0.55: 
+                        matched_group = valid_groups[idx]
+                        photos = matched_group.tagged_photos.values_list('photo_id', flat=True)
+                        matching_photo_ids.update(photos)
+                        print(f"SUCCESS: Match confirmed at {accuracy_percent:.2f}%")
+                        break # We take the single best match only
 
         return HttpResponse(json.dumps({'photo_ids': list(matching_photo_ids)}), content_type="application/json")
 
     except Exception as e:
         print(f"Error in search_photos_by_face: {e}")
-        import traceback
-        traceback.print_exc()
-        return HttpResponse(json.dumps({'error': f'Server Error: {str(e)}'}), content_type="application/json", status=500)
-
-
-
+        return HttpResponse(json.dumps({'error': 'Server Error'}), status=500)
+        
 @login_required
 def generate_ai_packing(request, trip_id):
     if request.method != "POST":
