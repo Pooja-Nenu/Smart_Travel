@@ -18,6 +18,7 @@ import io
 import base64
 import openai
 from django.conf import settings
+import json
 from django.contrib import messages
 from .models import Trip, ChecklistItem,TripItinerary,FaceGroup, PhotoFaceRelation
 import re
@@ -221,6 +222,13 @@ def trip_detail(request, pk):
         )
     ).order_by('priority_val', 'is_done')
 
+    # Clean item names by removing priority in parentheses
+    for item in group_items:
+        item.cleaned_name = item.item_name.split(' (')[0] if ' (' in item.item_name else item.item_name
+
+    for item in personal_items:
+        item.cleaned_name = item.item_name.split(' (')[0] if ' (' in item.item_name else item.item_name
+
     # For progress, usually we count group items or all visible items. Let's count group items for trip progress.
     total_items = group_items.count()
     completed_items = group_items.filter(is_done=True).count()
@@ -377,13 +385,21 @@ def trip_detail(request, pk):
         elif 'add_checklist_item' in request.POST:
             item_id = request.POST.get('checklist_item_id')
             instance = get_object_or_404(ChecklistItem, pk=item_id, trip=trip) if item_id else None
+
             checklist_form = ChecklistForm(request.POST, instance=instance)
+
             if checklist_form.is_valid():
                 item = checklist_form.save(commit=False)
                 item.trip = trip
+
                 if not instance:
                     item.user = request.user
+
+                # ✅ THIS IS THE MAIN FIX
+                item.is_personal = request.POST.get('is_personal') == 'on'
+
                 item.save()
+
             return redirect('trip_detail', pk=pk)
 
         elif 'stop_id' in request.POST or 'location' in request.POST:
@@ -772,12 +788,6 @@ def search_photos_by_face(request, pk):
     if not uploaded_file:
         return HttpResponse(json.dumps({'error': 'No image provided'}), content_type="application/json", status=400)
 
-    import face_recognition 
-    from PIL import ImageEnhance, ImageOps
-    import json
-    import numpy as np
-    import pickle
-    import faiss
 
     try:
         pil_image = Image.open(uploaded_file)
@@ -853,56 +863,152 @@ def search_photos_by_face(request, pk):
         
 @login_required
 def generate_ai_packing(request, trip_id):
+
     if request.method != "POST":
-        return JsonResponse({'status': 'failed'}, status=400)
+        return JsonResponse({
+            'status': 'failed',
+            'message': 'Invalid request method'
+        }, status=400)
 
     try:
-        # 1. Get Trip Data (Using get_object_or_404 is safer)
-        from django.shortcuts import get_object_or_404
+        # Get Trip
         trip = get_object_or_404(Trip, id=trip_id)
 
-        # 2. Get Stops using the correct related_name 'itinerary'
-        stops = trip.itinerary.all() 
-        # Using s.location because that is the field name in your TripItinerary model
+        # Get is_personal from request
+        data = json.loads(request.body)
+        is_personal = data.get('is_personal', False)
+
+        # Delete previous AI items (so no duplicates)
+        ChecklistItem.objects.filter(
+            trip=trip,
+            user=request.user,
+            is_personal=is_personal
+        ).delete()
+
+        # Get itinerary stops
+        stops = trip.itinerary.all()
         stops_list = ", ".join([s.location for s in stops])
 
-        # 3. Construct the Llama Prompt
+        # AI Prompt
         prompt = f"""
         Generate a travel packing list for a trip to {trip.destination}.
         Dates: From {trip.start_date} to {trip.end_date}.
         Itinerary Stops: {stops_list if stops_list else 'No specific stops'}.
-        
-        Provide the result ONLY as a comma-separated list of items. 
-        Example: Passport, Phone Charger, Sunscreen, Walking Shoes
-        Do not include any intro or outro text.
+
+        Respond with ONLY a comma-separated list of essential packing items, each with a priority in parentheses.
+        Priorities: High (essential items), Medium (useful items), Low (optional items).
+        Format: Item (Priority), Item (Priority)
+        Example: Passport (High), Phone Charger (Medium), Extra Socks (Low)
         """
 
-        # 4. Call Llama API
-        from groq import Groq
+        # Call Llama API
+        if not settings.GROQ_API_KEY:
+            return JsonResponse({
+                'status': 'failed',
+                'message': 'GROQ_API_KEY not configured'
+            }, status=500)
+
         client = Groq(api_key=settings.GROQ_API_KEY)
-        chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
+
+        response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
         )
 
-        # 5. Process the AI response
-        ai_response = chat_completion.choices[0].message.content
-        items_to_add = [item.strip() for item in ai_response.split(',') if item.strip()]
+        # Process response
+        ai_text = response.choices[0].message.content.strip()
 
-        # 6. Save to Database (Using ChecklistItem and item_name)
-        for item in items_to_add:
-            ChecklistItem.objects.get_or_create(
+        # Parse items with priorities
+        items_with_priorities = []
+        for part in ai_text.split(','):
+            part = part.strip()
+            if '(' in part and ')' in part:
+                # Extract item and priority
+                last_paren = part.rfind('(')
+                item_name = part[:last_paren].strip()
+                priority_part = part[last_paren:].strip('()').strip()
+                # Normalize priority
+                if priority_part.lower() in ['high', 'essential']:
+                    priority = 'High'
+                elif priority_part.lower() in ['medium', 'useful']:
+                    priority = 'Medium'
+                elif priority_part.lower() in ['low', 'optional']:
+                    priority = 'Low'
+                else:
+                    priority = 'Medium'  # default
+                if item_name:
+                    items_with_priorities.append((item_name, priority))
+            else:
+                # No priority, assume Medium
+                if part:
+                    items_with_priorities.append((part, 'Medium'))
+
+        # Save AI items
+        created_count = 0
+
+        for item_name, priority in items_with_priorities[:20]:  # Limit to 20
+            ChecklistItem.objects.create(
                 trip=trip,
-                item_name=item[:200], # Field name is 'item_name' in your models.py
-                defaults={
-                    'priority': 'Medium', 
-                    'is_personal': False,
-                    'user': request.user # Associates the item with the logged-in user
-                }
+                user=request.user,
+                item_name=item_name[:200],
+                priority=priority,
+                is_personal=is_personal
             )
+            created_count += 1
 
-        return JsonResponse({'status': 'success', 'items_added': len(items_to_add)})
+        return JsonResponse({
+            'status': 'success',
+            'items_added': created_count
+        })
 
     except Exception as e:
-        # Returning the actual error message helps you debug in the browser console
-        return JsonResponse({'status': 'failed', 'message': str(e)}, status=500)
+        return JsonResponse({
+            'status': 'failed',
+            'message': str(e)
+        }, status=500)
+
+
+# ======================================================
+# Fetch Packing Items (Personal + AI Separately)
+# ======================================================
+@login_required
+def get_packing_items(request, trip_id):
+
+    try:
+        trip = get_object_or_404(Trip, id=trip_id)
+
+        # Personal items
+        personal_items = ChecklistItem.objects.filter(
+            trip=trip,
+            user=request.user,
+            is_personal=True
+        ).values(
+            'id',
+            'item_name',
+            'priority'
+        )
+
+        # AI items
+        ai_items = ChecklistItem.objects.filter(
+            trip=trip,
+            user=request.user,
+            is_personal=False
+        ).values(
+            'id',
+            'item_name',
+            'priority'
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'personal_items': list(personal_items),
+            'ai_items': list(ai_items)
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'failed',
+            'message': str(e)
+        }, status=500)

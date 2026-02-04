@@ -579,7 +579,7 @@
                         Trips</span></a>
                 <a href="{% url 'checklist_dashboard' %}" class="menu-item"><i
                         class="fas fa-clipboard-check"></i><span>Checklists</span></a>
-                <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a>
+                <!-- <a href="#" class="menu-item"><i class="fas fa-wallet"></i><span>Expenses</span></a> -->
             </div>
             <div class="menu-section">
                 <div class="menu-label">Settings</div>
@@ -782,10 +782,10 @@
                                             {% endif %}
                                         </a>
                                         <div>
-                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
-                                                
+                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.cleaned_name }}</span>
+                                            
                                             <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                                                <span class="priority-badge p-{{ item.priority|lower }}">{{ item.priority }}</span>
+                                                <span style="font-size: 12px; font-weight: 500; color: {% if item.priority == 'High' %}#EF4444{% elif item.priority == 'Medium' %}#F59E0B{% else %}#10B981{% endif %};">Priority: {{ item.priority }}</span>
                                                     
                                                 {% if item.stop %}
                                                 <span class="priority-badge p-low"
@@ -832,10 +832,10 @@
                                             {% endif %}
                                         </a>
                                         <div>
-                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.item_name }}</span>
-                                                
+                                            <span style="font-weight: 600; color: var(--text-main); display: block;">{{ item.cleaned_name }}</span>
+                                            
                                             <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                                                <span class="priority-badge p-{{ item.priority|lower }}">{{ item.priority }}</span>
+                                                <span style="font-size: 12px; font-weight: 500; color: {% if item.priority == 'High' %}#EF4444{% elif item.priority == 'Medium' %}#F59E0B{% else %}#10B981{% endif %};">Priority: {{ item.priority }}</span>
                                                     
                                                 {% if item.stop %}
                                                 <span class="priority-badge p-low"
@@ -1055,8 +1055,8 @@
                                 <h3 style="margin:0; font-weight:700; color:var(--text-main); font-size: 20px;">Total
                                     Expenses</h3>
                                 <span
-                                    style="font-size:18px; font-weight:700; color:var(--blue);">₹{{total_expense|floatformat:2
-                                    }}</span>
+                                    style="font-size:18px; font-weight:700; color:var(--blue);">₹{{total_expense|floatformat:2 }}</span>
+                                    
                             </div>
                         </div>
 
@@ -1543,8 +1543,8 @@
                             <div class="checklist-item"
                                 style="background: var(--hover-bg); border-top: 2px solid var(--border-color);">
                                 <div style="font-weight: 800;">TOTAL TRIP COST</div>
-                                <div style="font-weight: 800; color: var(--blue); font-size: 18px;">₹{{
-                                    total_expense|floatformat:2 }}</div>
+                                <div style="font-weight: 800; color: var(--blue); font-size: 18px;">₹{{ total_expense|floatformat:2 }}</div>
+                                    
                             </div>
                         </div>
                     </div>
@@ -1574,8 +1574,8 @@
                             <p
                                 style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
                                 Estimated Final Cost</p>
-                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">₹{{
-                                projected_total|floatformat:2 }}</h3>
+                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">₹{{ projected_total|floatformat:2 }}</h3>
+                                
                             <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Based on current
                                 spending speed</p>
                         </div>
@@ -1586,8 +1586,8 @@
                             <p
                                 style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
                                 Daily Spending</p>
-                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">₹{{
-                                daily_avg|floatformat:2 }}<small>/day</small></h3>
+                            <h3 style="margin: 0; color: var(--text-main); font-weight: 800;">₹{{ daily_avg|floatformat:2 }}<small>/day</small></h3>
+                                
                             <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Current average cost
                             </p>
                         </div>
@@ -1598,8 +1598,8 @@
                             <p
                                 style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
                                 Safe Daily Limit</p>
-                            <h3 style="margin: 0; color: #10B981; font-weight: 800;">₹{{ safe_daily_limit|floatformat:2
-                                }}<small>/day</small></h3>
+                            <h3 style="margin: 0; color: #10B981; font-weight: 800;">₹{{ safe_daily_limit|floatformat:2 }}<small>/day</small></h3>
+                                
                             <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Limit to stay within
                                 budget</p>
                         </div>
@@ -1657,6 +1657,19 @@
     </div>
 
     <script>
+        // Initialize active checklist tab
+        window.activeChecklistTab = 'group-items';
+
+        // Restore active checklist tab on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTab = localStorage.getItem('activeChecklistTab');
+            if (savedTab) {
+                const btn = document.querySelector(`#checklist .tab-btn[onclick*="openChecklistTab('${savedTab}'"]`);
+                if (btn) {
+                    openChecklistTab(savedTab, btn);
+                }
+            }
+        });
         // --- FIND ME (WEBCAM SEARCH) ---
         let videoStream = null;
 
@@ -1840,6 +1853,9 @@
                 target.classList.add("active");
             }
             if (btnElement) btnElement.classList.add("active");
+            // Track active checklist tab
+            window.activeChecklistTab = tabName;
+            localStorage.setItem('activeChecklistTab', tabName);
         }
 
         // --- EDIT FUNCTIONS ---
@@ -2135,13 +2151,17 @@
 
         try {
             // 2. Fetch call using the Django URL tag
+            const isPersonal = window.activeChecklistTab === 'personal-items';
             const response = await fetch("{% url 'generate_ai_packing' trip.id %}", {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ trip_id: "{{ trip.id }}" })
+                body: JSON.stringify({ 
+                    trip_id: "{{ trip.id }}",
+                    is_personal: isPersonal
+                })
             });
 
             const data = await response.json();
